@@ -1,5 +1,35 @@
-import { chromium, type Page } from "playwright";
+import { chromium, type Page, type Browser, type BrowserContext } from "playwright";
 import type { BrowserEntry, BrowserInfo, PageEntry, PageInfo } from "./types";
+
+// Camoufox types (dynamically imported due to better-sqlite3 Bun incompatibility)
+interface CamoufoxOptions {
+	headless?: boolean;
+	humanize?: boolean | number;
+	block_webrtc?: boolean;
+	geoip?: string | boolean;
+	proxy?: {
+		server: string;
+		username?: string;
+		password?: string;
+	};
+}
+
+// Lazy-load Camoufox to avoid better-sqlite3 issues in Bun
+let CamoufoxModule: { Camoufox: (options: CamoufoxOptions) => Promise<Browser> } | null = null;
+async function getCamoufox(): Promise<(options: CamoufoxOptions) => Promise<Browser>> {
+	if (!CamoufoxModule) {
+		try {
+			CamoufoxModule = await import("camoufox-js");
+		} catch (error) {
+			throw new Error(
+				`Failed to load Camoufox: ${error instanceof Error ? error.message : String(error)}. ` +
+					"This may be due to better-sqlite3 incompatibility with Bun. " +
+					"Try running with Node.js instead, or use stealth mode without useCamoufox.",
+			);
+		}
+	}
+	return CamoufoxModule.Camoufox;
+}
 import {
 	STEALTH_ARGS,
 	STEALTH_VIEWPORT,
@@ -7,10 +37,22 @@ import {
 	getRealisticUserAgent,
 } from "../stealth";
 
+export interface ProxyOptions {
+	server: string;
+	username?: string;
+	password?: string;
+}
+
 export interface StartBrowserOptions {
 	headless?: boolean;
 	url?: string;
 	stealth?: boolean;
+	/** Use Camoufox anti-detect browser (Firefox-based) for better bot evasion */
+	useCamoufox?: boolean;
+	/** Proxy server configuration */
+	proxy?: ProxyOptions;
+	/** Auto-detect timezone/locale from proxy IP (Camoufox only) */
+	geoip?: boolean;
 }
 
 export interface StartBrowserResult {
@@ -50,32 +92,76 @@ export class BrowserSessionManager {
 	}
 
 	async startBrowser(options: StartBrowserOptions = {}): Promise<StartBrowserResult> {
-		const { headless = true, url, stealth = true } = options;
+		const { headless = true, url, stealth = true, useCamoufox = false, proxy, geoip = false } = options;
 
-		// Launch with stealth args if enabled
-		const browser = await chromium.launch({
-			headless,
-			args: stealth ? STEALTH_ARGS : [],
-		});
+		let browser: Browser;
+		let context: BrowserContext;
+		let page: Page;
 
-		// Create context with realistic settings if stealth enabled
-		const context = await browser.newContext(
-			stealth
-				? {
-						viewport: STEALTH_VIEWPORT,
-						userAgent: getRealisticUserAgent(),
-						locale: "en-US",
-						timezoneId: Intl.DateTimeFormat().resolvedOptions().timeZone,
-					}
-				: {},
-		);
+		if (useCamoufox) {
+			// Use Camoufox for maximum anti-detection
+			const Camoufox = await getCamoufox();
+			const camoufoxOptions: CamoufoxOptions = {
+				headless,
+				humanize: true, // Human-like cursor movement
+				block_webrtc: true, // Prevent WebRTC IP leaks
+				geoip: geoip || (proxy ? true : false), // Auto-detect geo from IP if proxy set
+				proxy: proxy
+					? {
+							server: proxy.server,
+							username: proxy.username,
+							password: proxy.password,
+						}
+					: undefined,
+			};
 
-		// Inject stealth scripts before any page loads
-		if (stealth) {
-			await context.addInitScript(STEALTH_INIT_SCRIPT);
+			// Camoufox returns a Browser object with a default context
+			browser = await Camoufox(camoufoxOptions);
+			// Get the default context (Camoufox creates one automatically)
+			const contexts = browser.contexts();
+			context = contexts[0] || (await browser.newContext());
+			page = context.pages()[0] || (await context.newPage());
+		} else {
+			// Existing Playwright Chromium path
+			browser = await chromium.launch({
+				headless,
+				args: stealth ? STEALTH_ARGS : [],
+			});
+
+			// Create context with realistic settings if stealth enabled
+			context = await browser.newContext(
+				stealth
+					? {
+							viewport: STEALTH_VIEWPORT,
+							userAgent: getRealisticUserAgent(),
+							locale: "en-US",
+							timezoneId: Intl.DateTimeFormat().resolvedOptions().timeZone,
+							proxy: proxy
+								? {
+										server: proxy.server,
+										username: proxy.username,
+										password: proxy.password,
+									}
+								: undefined,
+						}
+					: proxy
+						? {
+								proxy: {
+									server: proxy.server,
+									username: proxy.username,
+									password: proxy.password,
+								},
+							}
+						: {},
+			);
+
+			// Inject stealth scripts before any page loads
+			if (stealth) {
+				await context.addInitScript(STEALTH_INIT_SCRIPT);
+			}
+
+			page = await context.newPage();
 		}
-
-		const page = await context.newPage();
 
 		const browserId = this.nextBrowserId();
 		const pageId = this.nextPageId();

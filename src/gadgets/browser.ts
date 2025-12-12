@@ -3,7 +3,7 @@ import type { BrowserSessionManager } from "../session";
 
 export class StartBrowser extends Gadget({
 	description:
-		"Starts a new browser instance with anti-detection measures enabled by default. Returns browserId and pageId for the initial page.",
+		"Starts a new browser instance with anti-detection measures enabled by default. Returns browserId and pageId for the initial page. Use useCamoufox=true for sites with strong bot detection (e.g., Cloudflare).",
 	schema: z.object({
 		url: z.string().url().optional().describe("Initial URL to navigate to after starting"),
 		headless: z
@@ -14,17 +14,38 @@ export class StartBrowser extends Gadget({
 			.boolean()
 			.default(true)
 			.describe("Enable anti-detection measures (realistic user agent, viewport, patches navigator.webdriver, etc.)"),
+		useCamoufox: z
+			.boolean()
+			.default(false)
+			.describe("Use Camoufox anti-detect browser (Firefox-based) for maximum bot evasion. Bypasses Cloudflare and similar protections."),
+		proxy: z
+			.object({
+				server: z.string().describe("Proxy server URL (e.g., 'http://proxy.example.com:8080')"),
+				username: z.string().optional().describe("Proxy username for authentication"),
+				password: z.string().optional().describe("Proxy password for authentication"),
+			})
+			.optional()
+			.describe("Proxy server configuration"),
+		geoip: z
+			.boolean()
+			.default(false)
+			.describe("Auto-detect timezone/locale from proxy IP (Camoufox only). Ensures browser settings match proxy location."),
 	}),
 	examples: [
 		{
-			params: { headless: true, stealth: true },
+			params: { headless: true, stealth: true, useCamoufox: false, geoip: false },
 			output: '{"browserId":"b1","pageId":"p1","url":"about:blank"}',
 			comment: "Start a headless browser with stealth mode",
 		},
 		{
-			params: { url: "https://example.com", headless: false, stealth: true },
+			params: { url: "https://example.com", headless: false, stealth: true, useCamoufox: false, geoip: false },
 			output: '{"browserId":"b1","pageId":"p1","url":"https://example.com/"}',
 			comment: "Start visible browser with stealth and navigate to URL",
+		},
+		{
+			params: { url: "https://cloudflare-protected-site.com", headless: false, stealth: true, useCamoufox: true, geoip: false },
+			output: '{"browserId":"b1","pageId":"p1","url":"https://cloudflare-protected-site.com/"}',
+			comment: "Use Camoufox for sites with strong bot detection",
 		},
 	],
 }) {
@@ -37,6 +58,9 @@ export class StartBrowser extends Gadget({
 			headless: params.headless,
 			url: params.url,
 			stealth: params.stealth,
+			useCamoufox: params.useCamoufox,
+			proxy: params.proxy,
+			geoip: params.geoip,
 		});
 		return JSON.stringify(result);
 	}

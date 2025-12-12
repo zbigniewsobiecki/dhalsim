@@ -33,6 +33,7 @@
 	"author": "Zbigniew Sobiecki",
 	"license": "MIT",
 	"dependencies": {
+		"camoufox-js": "^0.8.4",
 		"chalk": "^5.6.2",
 		"commander": "^12.1.0",
 		"llmist": "file:../llmist",
