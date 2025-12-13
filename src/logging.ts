@@ -90,7 +90,7 @@ export async function createSessionDir(baseDir: string): Promise<string | undefi
 		await mkdir(sessionDir, { recursive: true });
 		return sessionDir;
 	} catch (error) {
-		console.warn(`[webasto] Failed to create log session directory: ${sessionDir}`, error);
+		console.warn(`[dhalsim] Failed to create log session directory: ${sessionDir}`, error);
 		return undefined;
 	}
 }

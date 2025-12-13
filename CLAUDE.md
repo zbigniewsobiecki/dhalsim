@@ -1,4 +1,4 @@
-# Webasto
+# Dhalsim
 
 Browser automation CLI powered by llmist with Playwright gadgets.
 

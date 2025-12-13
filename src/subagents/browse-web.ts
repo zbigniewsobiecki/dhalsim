@@ -22,7 +22,7 @@ import { BROWSE_WEB_SYSTEM_PROMPT } from "./prompts";
  * BrowseWeb subagent - a high-level gadget that runs its own agent loop
  * to accomplish web browsing tasks autonomously.
  *
- * This is the recommended way for most users to interact with webasto.
+ * This is the recommended way for most users to interact with dhalsim.
  * Instead of registering 26+ individual gadgets, just use BrowseWeb
  * and let it handle the complexity of web automation.
  *
@@ -64,7 +64,7 @@ Use this for web research, data extraction, form filling, or any web-based task.
 		// 4. Hardcoded fallback defaults
 		//
 		// Note: agentConfig and subagentConfig are new ExecutionContext properties added in llmist 2.7+
-		// Using type assertion until webasto updates to the new llmist version
+		// Using type assertion until dhalsim updates to the new llmist version
 		const extendedCtx = ctx as ExecutionContext & {
 			agentConfig?: { model: string; temperature?: number };
 			subagentConfig?: Record<string, Record<string, unknown>>;

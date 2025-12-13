@@ -7,12 +7,12 @@ export * from "./gadgets";
 
 // Factory functions for dependency injection
 export {
-	createWebastoGadgets,
+	createDhalsimGadgets,
 	createGadgetsByPreset,
 	createGadgetsByName,
-	type WebastoConfig,
-	type WebastoGadgets,
-	type WebastoPreset,
+	type DhalsimConfig,
+	type DhalsimGadgets,
+	type DhalsimPreset,
 } from "./factory";
 
 // Subagents (high-level gadgets with internal agent loops)

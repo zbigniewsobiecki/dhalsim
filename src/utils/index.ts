@@ -1,5 +1,5 @@
 /**
- * Utility exports for webasto browser automation CLI.
+ * Utility exports for dhalsim browser automation CLI.
  */
 
 export { getErrorMessage, truncate } from "./errors.js";

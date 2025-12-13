@@ -1,5 +1,5 @@
 /**
- * Centralized constants for the webasto browser automation CLI.
+ * Centralized constants for the dhalsim browser automation CLI.
  */
 
 // Text truncation limits

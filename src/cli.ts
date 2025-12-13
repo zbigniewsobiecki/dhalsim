@@ -159,7 +159,7 @@ async function main() {
 	const program = new Command();
 
 	program
-		.name("webasto")
+		.name("dhalsim")
 		.description("Browser automation CLI powered by llmist with Playwright gadgets")
 		.version("0.1.0")
 		.argument("[task]", "Natural language task to perform")

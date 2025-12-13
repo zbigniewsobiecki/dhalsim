@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "webasto",
+      "name": "dhalsim",
       "dependencies": {
         "better-sqlite3": "nounder/bun-better-sqlite3",
         "camoufox-js": "github:zbigniewsobiecki/camoufox-js#impit-fallback",

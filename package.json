@@ -1,12 +1,12 @@
 {
-	"name": "webasto",
+	"name": "dhalsim",
 	"version": "0.1.0",
 	"description": "Browser automation CLI powered by llmist with Camoufox anti-detect browser",
 	"type": "module",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"bin": {
-		"webasto": "dist/cli.js"
+		"dhalsim": "dist/cli.js"
 	},
 	"llmist": {
 		"gadgets": "./dist/index.js",

@@ -23,9 +23,9 @@ import { RequestUserAssistance } from "./gadgets/user-input";
 import { Wait, WaitForElement } from "./gadgets/wait";
 
 /**
- * Configuration for creating webasto gadgets.
+ * Configuration for creating dhalsim gadgets.
  */
-export interface WebastoConfig {
+export interface DhalsimConfig {
 	/**
 	 * Browser session manager to use. If not provided, uses the default singleton.
 	 */
@@ -33,9 +33,9 @@ export interface WebastoConfig {
 }
 
 /**
- * All webasto gadgets as a record keyed by name.
+ * All dhalsim gadgets as a record keyed by name.
  */
-export interface WebastoGadgets {
+export interface DhalsimGadgets {
 	// Content
 	GetFullPageContent: GetFullPageContent;
 	Screenshot: Screenshot;
@@ -70,7 +70,7 @@ export interface WebastoGadgets {
 }
 
 /**
- * Create all webasto gadgets with dependency injection.
+ * Create all dhalsim gadgets with dependency injection.
  *
  * @param config - Optional configuration (sessionManager)
  * @returns Record of all gadgets keyed by name
@@ -78,10 +78,10 @@ export interface WebastoGadgets {
  * @example
  * ```typescript
  * // Use default session manager (CLI usage)
- * const gadgets = createWebastoGadgets();
+ * const gadgets = createDhalsimGadgets();
  *
  * // Use custom session manager (library usage)
- * const gadgets = createWebastoGadgets({
+ * const gadgets = createDhalsimGadgets({
  *   sessionManager: myCustomSessionManager,
  * });
  *
@@ -89,7 +89,7 @@ export interface WebastoGadgets {
  * registry.register('Navigate', gadgets.Navigate);
  * ```
  */
-export function createWebastoGadgets(config?: WebastoConfig): WebastoGadgets {
+export function createDhalsimGadgets(config?: DhalsimConfig): DhalsimGadgets {
 	const manager = config?.sessionManager ?? getSessionManager();
 
 	return {
@@ -130,7 +130,7 @@ export function createWebastoGadgets(config?: WebastoConfig): WebastoGadgets {
 /**
  * Preset names for common gadget combinations.
  */
-export type WebastoPreset = "all" | "subagent" | "readonly" | "minimal";
+export type DhalsimPreset = "all" | "subagent" | "readonly" | "minimal";
 
 /**
  * Get gadgets by preset name.
@@ -152,10 +152,10 @@ export type WebastoPreset = "all" | "subagent" | "readonly" | "minimal";
  * ```
  */
 export function createGadgetsByPreset(
-	preset: WebastoPreset,
-	config?: WebastoConfig,
+	preset: DhalsimPreset,
+	config?: DhalsimConfig,
 ): BaseGadget[] {
-	const gadgets = createWebastoGadgets(config);
+	const gadgets = createDhalsimGadgets(config);
 
 	switch (preset) {
 		case "all":
@@ -200,13 +200,13 @@ export function createGadgetsByPreset(
  */
 export function createGadgetsByName(
 	names: string[],
-	config?: WebastoConfig,
+	config?: DhalsimConfig,
 ): BaseGadget[] {
-	const allGadgets = createWebastoGadgets(config);
+	const allGadgets = createDhalsimGadgets(config);
 	const result: BaseGadget[] = [];
 
 	for (const name of names) {
-		const gadget = allGadgets[name as keyof WebastoGadgets];
+		const gadget = allGadgets[name as keyof DhalsimGadgets];
 		if (gadget) {
 			result.push(gadget);
 		} else {
