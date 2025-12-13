@@ -180,6 +180,9 @@ async function main() {
 			});
 			console.error(chalk.dim(`Browser ready (page: ${pageId})`));
 
+			// Prime the state cache so first LLM call has valid state
+			await pageStateScanner.refreshState();
+
 			// Create all gadget instances with the shared manager
 			const gadgets = [
 				new NewPage(manager),
