@@ -1,12 +1,13 @@
 import { Gadget, z } from "llmist";
 import type { IBrowserSessionManager } from "../session";
+import { selectorSchema } from "./selector-validator";
 
 export class WaitForElement extends Gadget({
 	description:
 		"Waits for an element to reach a specific state (visible, hidden, attached, detached). Useful before interacting with dynamic content.",
 	schema: z.object({
 		pageId: z.string().describe("Page ID"),
-		selector: z.string().describe("CSS selector of element to wait for"),
+		selector: selectorSchema.describe("CSS selector of element to wait for"),
 		state: z
 			.enum(["visible", "hidden", "attached", "detached"])
 			.default("visible")

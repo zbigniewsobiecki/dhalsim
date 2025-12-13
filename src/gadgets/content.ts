@@ -1,6 +1,7 @@
 import { Gadget, z, resultWithImage, type GadgetExecuteResultWithMedia } from "llmist";
 import sharp from "sharp";
 import type { IBrowserSessionManager } from "../session";
+import { optionalSelectorSchema, selectorsArraySchema } from "./selector-validator";
 
 /** Claude's max image dimension is 8000px */
 const MAX_IMAGE_DIMENSION = 8000;
@@ -33,14 +34,10 @@ export class GetFullPageContent extends Gadget({
 		"Gets the full visible text content of a page or specific element(s) with no truncation. Use 'selectors' array to query multiple elements at once. Use 'structure=true' to get DOM structure info for ExecuteScript.",
 	schema: z.object({
 		pageId: z.string().describe("Page ID"),
-		selector: z
-			.string()
-			.optional()
-			.describe("CSS selector to get content from specific element (default: entire page)"),
-		selectors: z
-			.array(z.string())
-			.optional()
-			.describe("Array of CSS selectors to query multiple elements at once."),
+		selector: optionalSelectorSchema.describe(
+			"CSS selector to get content from specific element (default: entire page)",
+		),
+		selectors: selectorsArraySchema.describe("Array of CSS selectors to query multiple elements at once."),
 		structure: z
 			.boolean()
 			.optional()
@@ -186,7 +183,7 @@ export class Screenshot extends Gadget({
 			.boolean()
 			.default(false)
 			.describe("Capture full scrollable page instead of just viewport"),
-		selector: z.string().optional().describe("Screenshot only a specific element"),
+		selector: optionalSelectorSchema.describe("Screenshot only a specific element"),
 	}),
 	examples: [
 		{

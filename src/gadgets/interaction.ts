@@ -2,6 +2,7 @@ import { Gadget, z } from "llmist";
 import type { Page } from "playwright-core";
 import type { IBrowserSessionManager } from "../session";
 import { humanDelay, randomDelay } from "../stealth";
+import { selectorSchema, optionalSelectorSchema } from "./selector-validator";
 
 // Language-agnostic CMP accept button selectors (from CHI 2025 research paper)
 // These work regardless of language because they target CMP-specific class/id patterns
@@ -267,7 +268,7 @@ export class Click extends Gadget({
 		"Clicks on an element. Use selectors from <CurrentBrowserState>. If click fails due to another element covering it, try force: true.",
 	schema: z.object({
 		pageId: z.string().describe("Page ID"),
-		selector: z.string().describe("CSS selector of element to click"),
+		selector: selectorSchema.describe("CSS selector of element to click"),
 		button: z.enum(["left", "right", "middle"]).default("left").describe("Mouse button"),
 		clickCount: z
 			.number()
@@ -355,7 +356,7 @@ export class ClickAndNavigate extends Gadget({
 		"Clicks an element and waits for navigation to complete. More efficient than calling Click followed by WaitForNavigation. Use for links, buttons that trigger page loads, form submits, etc.",
 	schema: z.object({
 		pageId: z.string().describe("Page ID"),
-		selector: z.string().describe("CSS selector of element to click"),
+		selector: selectorSchema.describe("CSS selector of element to click"),
 		timeout: z.number().default(30000).describe("Navigation timeout in milliseconds"),
 		force: z
 			.boolean()
@@ -413,7 +414,7 @@ export class Type extends Gadget({
 		"Types text into an input element character by character with human-like timing. Use Fill for faster input that clears the field first.",
 	schema: z.object({
 		pageId: z.string().describe("Page ID"),
-		selector: z.string().describe("CSS selector of input element"),
+		selector: selectorSchema.describe("CSS selector of input element"),
 		text: z.string().describe("Text to type"),
 		delay: z
 			.number()
@@ -472,7 +473,7 @@ export class Fill extends Gadget({
 		"Fills an input field with text, clearing any existing value first. Faster than Type but less human-like.",
 	schema: z.object({
 		pageId: z.string().describe("Page ID"),
-		selector: z.string().describe("CSS selector of input element"),
+		selector: selectorSchema.describe("CSS selector of input element"),
 		value: z.string().describe("Value to fill"),
 	}),
 	examples: [
@@ -526,16 +527,15 @@ export class FillForm extends Gadget({
 		fields: z
 			.array(
 				z.object({
-					selector: z.string().describe("CSS selector of the input field"),
+					selector: selectorSchema.describe("CSS selector of the input field"),
 					value: z.string().describe("Value to fill"),
 				}),
 			)
 			.min(1)
 			.describe("Array of fields to fill"),
-		submit: z
-			.string()
-			.optional()
-			.describe("CSS selector of submit button to click after filling fields (optional)"),
+		submit: optionalSelectorSchema.describe(
+			"CSS selector of submit button to click after filling fields (optional)",
+		),
 		waitForNavigation: z
 			.boolean()
 			.default(false)
@@ -654,7 +654,7 @@ export class FillPinCode extends Gadget({
 				"CSS selector pattern with {i} placeholder for index (e.g., '[name=\"pin_{i}\"]'). If omitted, auto-detects PIN inputs.",
 			),
 		startIndex: z.number().default(0).describe("Starting index for the pattern (default: 0)"),
-		submit: z.string().optional().describe("CSS selector of submit button to click after filling"),
+		submit: optionalSelectorSchema.describe("CSS selector of submit button to click after filling"),
 		waitForNavigation: z.boolean().default(false).describe("Wait for navigation after submit"),
 	}),
 	examples: [
@@ -828,7 +828,7 @@ export class Select extends Gadget({
 	description: "Selects an option in a dropdown (select element). Provide value, label, or index.",
 	schema: z.object({
 		pageId: z.string().describe("Page ID"),
-		selector: z.string().describe("CSS selector of select element"),
+		selector: selectorSchema.describe("CSS selector of select element"),
 		value: z.string().optional().describe("Option value attribute"),
 		label: z.string().optional().describe("Option visible text"),
 		index: z.number().optional().describe("Option index (0-based)"),
@@ -890,7 +890,7 @@ export class Check extends Gadget({
 	description: "Checks or unchecks a checkbox or radio button.",
 	schema: z.object({
 		pageId: z.string().describe("Page ID"),
-		selector: z.string().describe("CSS selector of checkbox/radio"),
+		selector: selectorSchema.describe("CSS selector of checkbox/radio"),
 		checked: z.boolean().default(true).describe("Whether to check (true) or uncheck (false)"),
 	}),
 	examples: [
@@ -934,7 +934,7 @@ export class Hover extends Gadget({
 	description: "Hovers over an element. Useful for revealing hidden menus or tooltips.",
 	schema: z.object({
 		pageId: z.string().describe("Page ID"),
-		selector: z.string().describe("CSS selector of element to hover"),
+		selector: selectorSchema.describe("CSS selector of element to hover"),
 	}),
 	examples: [
 		{
@@ -973,7 +973,7 @@ export class Scroll extends Gadget({
 		pageId: z.string().describe("Page ID"),
 		direction: z.enum(["up", "down", "left", "right"]).default("down").describe("Scroll direction"),
 		amount: z.number().default(500).describe("Scroll amount in pixels"),
-		selector: z.string().optional().describe("Scroll within a specific element (default: page)"),
+		selector: optionalSelectorSchema.describe("Scroll within a specific element (default: page)"),
 	}),
 	examples: [
 		{

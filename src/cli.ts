@@ -124,8 +124,12 @@ This is your source of truth for what's on screen. It contains:
 
 ## CRITICAL Rules
 1. Use pageId "p1" which is ALREADY OPEN. Do NOT use NewPage unless you need multiple tabs.
-2. ONLY use selectors exactly as shown in <CurrentBrowserState>
-3. NEVER guess or construct selectors - if it's not listed, use GetFullPageContent to find text content
+2. ONLY use selectors EXACTLY as shown in <CurrentBrowserState> - copy/paste them verbatim
+3. NEVER modify, combine, or construct selectors:
+   - NO :nth-child(), :first-child, :last-child (these don't exist in CurrentBrowserState)
+   - NO wildcard attributes like [href*=...] or [class*=...]
+   - NO combining selectors like ".class1 .class2" unless shown exactly that way
+4. If the selector you need isn't listed, use GetFullPageContent to read text content instead
 
 ## Cookie Banners & Overlays
 Use DismissOverlays FIRST when you encounter cookie consent popups or blocking overlays.
