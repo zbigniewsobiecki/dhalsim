@@ -200,13 +200,13 @@ export class FillForm extends Gadget({
 
 			if (params.submit) {
 				const submitLocator = page.locator(params.submit);
-				const submitCount = await submitLocator.count();
-				if (submitCount === 0) {
+				const submitError = await checkElementExists(submitLocator, params.submit);
+				if (submitError) {
 					return JSON.stringify({
 						success: filledCount === params.fields.length && errors.length === 0,
 						filledCount,
 						submitted: false,
-						error: `Submit button not found: ${params.submit}`,
+						submitError: JSON.parse(submitError),
 						fieldErrors: errors.length > 0 ? errors : undefined,
 					});
 				}
@@ -369,14 +369,14 @@ export class FillPinCode extends Gadget({
 
 			if (params.submit) {
 				const submitLocator = page.locator(params.submit);
-				const submitCount = await submitLocator.count();
-				if (submitCount === 0) {
+				const submitError = await checkElementExists(submitLocator, params.submit);
+				if (submitError) {
 					return JSON.stringify({
 						success: filledDigits > 0,
 						filledDigits,
 						detectedInputs,
 						submitted: false,
-						error: `Submit button not found: ${params.submit}`,
+						submitError: JSON.parse(submitError),
 					});
 				}
 

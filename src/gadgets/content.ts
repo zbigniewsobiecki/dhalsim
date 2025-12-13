@@ -56,12 +56,17 @@ export class GetFullPageContent extends Gadget({
 		{
 			params: { pageId: "p1", selector: "h1" },
 			output: '{"text":"Hello World"}',
-			comment: "Get text from h1 element",
+			comment: "Get text from single h1 element",
 		},
 		{
-			params: { pageId: "p1", selectors: ["#panel1", "#panel2", "#panel3"] },
-			output: '{"results":[{"text":"Invoice 1..."},{"text":"Invoice 2..."},{"text":"Invoice 3..."}]}',
-			comment: "Get text from multiple elements at once (results match selector order)",
+			params: { pageId: "p1", selector: ".invoice-row" },
+			output: '{"texts":["Invoice 1...","Invoice 2...","Invoice 3..."],"count":3}',
+			comment: "When selector matches multiple elements, returns all as array",
+		},
+		{
+			params: { pageId: "p1", selectors: ["#panel1", ".items"] },
+			output: '{"results":[{"text":"Panel content"},{"texts":["Item 1","Item 2"],"count":2}]}',
+			comment: "Multi-selector mode: each result can be single or array",
 		},
 		{
 			params: { pageId: "p1", structure: true },
@@ -130,11 +135,12 @@ export class GetFullPageContent extends Gadget({
 			}
 
 			// Multi-selector mode: query multiple elements at once
-			// Results are returned in same order as input selectors (no selector echoed back to avoid LLM learning to construct them)
+			// Results are returned in same order as input selectors
+			// When a selector matches multiple elements, returns all matches as array
 			if (params.selectors && params.selectors.length > 0) {
 				// Limit selectors to prevent DoS
 				const selectors = params.selectors.slice(0, MAX_SELECTORS_PER_QUERY);
-				const results: Array<{ text?: string; error?: string }> = [];
+				const results: Array<{ text?: string; texts?: string[]; count?: number; error?: string }> = [];
 
 				for (const selector of selectors) {
 					try {
@@ -144,9 +150,19 @@ export class GetFullPageContent extends Gadget({
 							results.push({ error: "Element not found" });
 							continue;
 						}
-						let text = (await locator.textContent()) || "";
-						text = text.replace(/\s+/g, " ").trim();
-						results.push({ text });
+						// When multiple elements match, return all as array
+						if (count > 1) {
+							const texts: string[] = [];
+							for (let i = 0; i < count; i++) {
+								const text = await locator.nth(i).textContent();
+								texts.push((text || "").replace(/\s+/g, " ").trim());
+							}
+							results.push({ texts, count });
+						} else {
+							let text = (await locator.textContent()) || "";
+							text = text.replace(/\s+/g, " ").trim();
+							results.push({ text });
+						}
 					} catch (error) {
 						results.push({ error: getErrorMessage(error) });
 					}
@@ -160,22 +176,30 @@ export class GetFullPageContent extends Gadget({
 				});
 			}
 
-			// Single selector or whole page mode (backward compatible)
-			let text: string;
+			// Single selector or whole page mode
 			if (params.selector) {
 				const locator = page.locator(params.selector);
 				const count = await locator.count();
 				if (count === 0) {
 					return JSON.stringify({ error: `Element not found: ${params.selector}` });
 				}
-				text = (await locator.textContent()) || "";
-			} else {
-				text = await page.innerText("body");
+				// When multiple elements match, return all as array
+				if (count > 1) {
+					const texts: string[] = [];
+					for (let i = 0; i < count; i++) {
+						const text = await locator.nth(i).textContent();
+						texts.push((text || "").replace(/\s+/g, " ").trim());
+					}
+					return JSON.stringify({ texts, count });
+				}
+				let text = (await locator.textContent()) || "";
+				text = text.replace(/\s+/g, " ").trim();
+				return JSON.stringify({ text });
 			}
 
-			// Normalize whitespace
+			// Whole page mode
+			let text = await page.innerText("body");
 			text = text.replace(/\s+/g, " ").trim();
-
 			return JSON.stringify({ text });
 		} catch (error) {
 			return JSON.stringify({ error: getErrorMessage(error) });

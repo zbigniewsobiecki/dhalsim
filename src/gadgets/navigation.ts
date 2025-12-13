@@ -28,6 +28,17 @@ export class Navigate extends Gadget({
 	async execute(params: this["params"]): Promise<string> {
 		try {
 			const page = this.manager.requirePage(params.pageId);
+
+			// Skip navigation if already on the target URL (avoid wasted calls)
+			const currentUrl = page.url();
+			if (this.urlsMatch(currentUrl, params.url)) {
+				return JSON.stringify({
+					url: currentUrl,
+					title: await page.title(),
+					alreadyOnPage: true,
+				});
+			}
+
 			await page.goto(params.url); // Uses Playwright default 'load'
 			return JSON.stringify({
 				url: page.url(),
@@ -35,6 +46,24 @@ export class Navigate extends Gadget({
 			});
 		} catch (error) {
 			return JSON.stringify({ error: getErrorMessage(error) });
+		}
+	}
+
+	/**
+	 * Compare URLs accounting for trailing slashes and minor differences.
+	 */
+	private urlsMatch(current: string, target: string): boolean {
+		try {
+			const normalize = (url: string) => {
+				const parsed = new URL(url);
+				// Remove trailing slash from pathname
+				parsed.pathname = parsed.pathname.replace(/\/$/, "") || "/";
+				return parsed.href;
+			};
+			return normalize(current) === normalize(target);
+		} catch {
+			// If URL parsing fails, do exact match
+			return current === target;
 		}
 	}
 }

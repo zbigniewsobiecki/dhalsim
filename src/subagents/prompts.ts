@@ -20,6 +20,8 @@ This is your source of truth for what's on screen. It contains:
 2. ONLY use selectors exactly as shown in <CurrentBrowserState>
 3. NEVER guess selectors - use GetFullPageContent if you need more info
 4. Focus on completing the task efficiently - avoid unnecessary actions
+5. If a selector matches multiple elements, you'll get an error with a "suggestions" array containing valid selectors. USE ONE OF THESE SUGGESTIONS DIRECTLY - don't guess or modify them.
+6. For batch extraction: GetFullPageContent returns ALL matches when a selector matches multiple elements (as "texts" array). Use this instead of querying each element separately.
 
 ## Efficient Pattern
 After Navigate, immediately:
@@ -28,6 +30,12 @@ After Navigate, immediately:
 3. Only then interact with elements
 
 If an action doesn't produce expected results, use GetFullPageContent to diagnose before retrying.
+
+## Dropdown/Toggle Behavior
+Dropdowns are TOGGLES - clicking the same trigger twice will close it!
+- After Click on a dropdown trigger, check <CurrentBrowserState> for MENUITEMS
+- If menuitems appear, click the menuitem ONCE - do NOT click the trigger again
+- One click opens, second click closes
 
 ## Available Gadgets
 - Navigate: Go to a URL

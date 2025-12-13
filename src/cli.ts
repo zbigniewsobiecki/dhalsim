@@ -165,7 +165,7 @@ async function main() {
 		.argument("[task]", "Natural language task to perform")
 		.option("-m, --model <model>", "Model to use", "sonnet")
 		.option("--headed", "Run browser in visible mode (default: headless)")
-		.option("--max-iterations <n>", "Maximum agent iterations", "50")
+		.option("--max-iterations <n>", "Maximum agent iterations", "30")
 		.option("-v, --verbose", "Show detailed gadget results", false)
 		.option("--log-llm-requests", "Save LLM requests/responses to ~/.llmist/logs/requests/")
 		.action(async (task: string | undefined, options: CLIOptions) => {
