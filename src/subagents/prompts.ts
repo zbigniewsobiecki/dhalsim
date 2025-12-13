@@ -21,8 +21,13 @@ This is your source of truth for what's on screen. It contains:
 3. NEVER guess selectors - use GetFullPageContent if you need more info
 4. Focus on completing the task efficiently - avoid unnecessary actions
 
-## Cookie Banners & Overlays
-Use DismissOverlays FIRST when you encounter cookie banners or blocking overlays.
+## Efficient Pattern
+After Navigate, immediately:
+1. DismissOverlays (proactive - cookie banners are common)
+2. GetFullPageContent or Screenshot to understand the page
+3. Only then interact with elements
+
+If an action doesn't produce expected results, use GetFullPageContent to diagnose before retrying.
 
 ## Available Gadgets
 - Navigate: Go to a URL

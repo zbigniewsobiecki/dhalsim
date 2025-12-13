@@ -43,9 +43,10 @@ export class WaitForElement extends Gadget({
 			// Get element text if visible
 			let elementText: string | undefined;
 			if (params.state === "visible" || params.state === "attached") {
-				const element = await page.$(params.selector);
-				if (element) {
-					elementText = ((await element.textContent()) || "").trim().slice(0, 100);
+				const locator = page.locator(params.selector);
+				const count = await locator.count();
+				if (count > 0) {
+					elementText = ((await locator.textContent()) || "").trim().slice(0, 100);
 				}
 			}
 

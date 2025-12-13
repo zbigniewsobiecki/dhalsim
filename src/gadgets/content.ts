@@ -134,12 +134,13 @@ export class GetFullPageContent extends Gadget({
 
 				for (const selector of params.selectors) {
 					try {
-						const element = await page.$(selector);
-						if (!element) {
+						const locator = page.locator(selector);
+						const count = await locator.count();
+						if (count === 0) {
 							results.push({ error: "Element not found" });
 							continue;
 						}
-						let text = (await element.textContent()) || "";
+						let text = (await locator.textContent()) || "";
 						text = text.replace(/\s+/g, " ").trim();
 						results.push({ text });
 					} catch (error) {
@@ -154,11 +155,12 @@ export class GetFullPageContent extends Gadget({
 			// Single selector or whole page mode (backward compatible)
 			let text: string;
 			if (params.selector) {
-				const element = await page.$(params.selector);
-				if (!element) {
+				const locator = page.locator(params.selector);
+				const count = await locator.count();
+				if (count === 0) {
 					return JSON.stringify({ error: `Element not found: ${params.selector}` });
 				}
-				text = (await element.textContent()) || "";
+				text = (await locator.textContent()) || "";
 			} else {
 				text = await page.innerText("body");
 			}
@@ -208,11 +210,12 @@ export class Screenshot extends Gadget({
 
 			let buffer: Buffer;
 			if (params.selector) {
-				const element = await page.$(params.selector);
-				if (!element) {
+				const locator = page.locator(params.selector);
+				const count = await locator.count();
+				if (count === 0) {
 					return JSON.stringify({ error: `Element not found: ${params.selector}` });
 				}
-				buffer = await element.screenshot({ type: "png" });
+				buffer = await locator.screenshot({ type: "png" });
 			} else {
 				buffer = await page.screenshot({
 					type: "png",

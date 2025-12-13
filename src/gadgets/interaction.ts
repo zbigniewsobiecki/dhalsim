@@ -306,17 +306,19 @@ export class Click extends Gadget({
 	async execute(params: this["params"]): Promise<string> {
 		try {
 			const page = this.manager.requirePage(params.pageId);
-			const element = await page.$(params.selector);
+			const locator = page.locator(params.selector);
 
-			if (!element) {
+			// Check if element exists
+			const count = await locator.count();
+			if (count === 0) {
 				return JSON.stringify({ error: `Element not found: ${params.selector}` });
 			}
 
-			const text = ((await element.textContent()) || "").trim().slice(0, 100);
+			const text = ((await locator.textContent()) || "").trim().slice(0, 100);
 			let scrolledIntoView = false;
 
 			// Check if element is in viewport, scroll if needed
-			const isInViewport = await element.evaluate((el) => {
+			const isInViewport = await locator.evaluate((el) => {
 				const rect = el.getBoundingClientRect();
 				return (
 					rect.top >= 0 &&
@@ -327,7 +329,7 @@ export class Click extends Gadget({
 			});
 
 			if (!isInViewport) {
-				await element.scrollIntoViewIfNeeded();
+				await locator.scrollIntoViewIfNeeded();
 				scrolledIntoView = true;
 			}
 
@@ -337,7 +339,7 @@ export class Click extends Gadget({
 			// If force not requested, try with short timeout first, then auto-retry with force on interception
 			if (!params.force) {
 				try {
-					await element.click({
+					await locator.click({
 						button: params.button,
 						clickCount: params.clickCount,
 						timeout: 5000, // Short timeout - fail fast if intercepted
@@ -351,7 +353,7 @@ export class Click extends Gadget({
 					const msg = firstError instanceof Error ? firstError.message : String(firstError);
 					// If intercepted by another element, auto-retry with force
 					if (msg.includes("intercepts pointer events")) {
-						await element.click({
+						await locator.click({
 							button: params.button,
 							clickCount: params.clickCount,
 							force: true,
@@ -368,7 +370,7 @@ export class Click extends Gadget({
 			}
 
 			// Force was explicitly requested
-			await element.click({
+			await locator.click({
 				button: params.button,
 				clickCount: params.clickCount,
 				force: true,
@@ -418,16 +420,17 @@ export class Type extends Gadget({
 	async execute(params: this["params"]): Promise<string> {
 		try {
 			const page = this.manager.requirePage(params.pageId);
-			const element = await page.$(params.selector);
+			const locator = page.locator(params.selector);
 
-			if (!element) {
+			const count = await locator.count();
+			if (count === 0) {
 				return JSON.stringify({ error: `Element not found: ${params.selector}` });
 			}
 
 			// Human-like: click to focus with small delay
 			// Use force: true to bypass overlay interception (common with MUI placeholder text)
 			await humanDelay(20, 60);
-			await element.click({ force: true });
+			await locator.click({ force: true });
 			await humanDelay(30, 80);
 
 			// Type with variable delays (±30% of base delay)
@@ -478,15 +481,16 @@ export class Fill extends Gadget({
 	async execute(params: this["params"]): Promise<string> {
 		try {
 			const page = this.manager.requirePage(params.pageId);
-			const element = await page.$(params.selector);
+			const locator = page.locator(params.selector);
 
-			if (!element) {
+			const count = await locator.count();
+			if (count === 0) {
 				return JSON.stringify({ error: `Element not found: ${params.selector}` });
 			}
 
 			// Human-like: small delay before filling
 			await humanDelay(30, 80);
-			await element.fill(params.value);
+			await locator.fill(params.value);
 
 			return JSON.stringify({ success: true });
 		} catch (error) {
@@ -560,13 +564,14 @@ export class FillForm extends Gadget({
 			// Fill each field
 			for (const field of params.fields) {
 				try {
-					const element = await page.$(field.selector);
-					if (!element) {
+					const locator = page.locator(field.selector);
+					const count = await locator.count();
+					if (count === 0) {
 						errors.push(`Field not found: ${field.selector}`);
 						continue;
 					}
 					await humanDelay(30, 80);
-					await element.fill(field.value);
+					await locator.fill(field.value);
 					filledCount++;
 				} catch (err) {
 					errors.push(`Failed to fill ${field.selector}: ${err instanceof Error ? err.message : String(err)}`);
@@ -578,8 +583,9 @@ export class FillForm extends Gadget({
 			let url: string | undefined;
 
 			if (params.submit) {
-				const submitBtn = await page.$(params.submit);
-				if (!submitBtn) {
+				const submitLocator = page.locator(params.submit);
+				const submitCount = await submitLocator.count();
+				if (submitCount === 0) {
 					return JSON.stringify({
 						success: filledCount > 0,
 						filledCount,
@@ -594,10 +600,10 @@ export class FillForm extends Gadget({
 				if (params.waitForNavigation) {
 					await Promise.all([
 						page.waitForNavigation({ timeout: 30000 }).catch(() => {}),
-						submitBtn.click(),
+						submitLocator.click(),
 					]);
 				} else {
-					await submitBtn.click();
+					await submitLocator.click();
 				}
 
 				submitted = true;
@@ -668,23 +674,26 @@ export class FillPinCode extends Gadget({
 				// Use provided pattern
 				for (let i = 0; i < digits.length; i++) {
 					const selector = params.selectorPattern.replace("{i}", String(params.startIndex + i));
-					const input = await page.$(selector);
-					if (input) {
+					const locator = page.locator(selector);
+					const count = await locator.count();
+					if (count > 0) {
 						detectedInputs++;
 						await humanDelay(30, 80);
-						await input.fill(digits[i]);
+						await locator.fill(digits[i]);
 						filledDigits++;
 					}
 				}
 			} else {
 				// Auto-detect PIN inputs: look for consecutive single-char inputs
-				const inputs = await page.$$(
+				const inputsLocator = page.locator(
 					'input[type="tel"], input[type="text"], input[type="number"], input[type="password"]',
 				);
 
 				// Filter to visible, single-char inputs that look like PIN fields
-				const pinInputs: Awaited<ReturnType<typeof page.$>>[] = [];
-				for (const input of inputs) {
+				const pinInputs: ReturnType<typeof page.locator>[] = [];
+				const inputCount = await inputsLocator.count();
+				for (let i = 0; i < inputCount; i++) {
+					const input = inputsLocator.nth(i);
 					try {
 						const isVisible = await input.isVisible();
 						const maxLength = await input.getAttribute("maxlength");
@@ -720,8 +729,9 @@ export class FillPinCode extends Gadget({
 			let url: string | undefined;
 
 			if (params.submit) {
-				const submitBtn = await page.$(params.submit);
-				if (!submitBtn) {
+				const submitLocator = page.locator(params.submit);
+				const submitCount = await submitLocator.count();
+				if (submitCount === 0) {
 					return JSON.stringify({
 						success: filledDigits > 0,
 						filledDigits,
@@ -736,10 +746,10 @@ export class FillPinCode extends Gadget({
 				if (params.waitForNavigation) {
 					await Promise.all([
 						page.waitForNavigation({ timeout: 30000 }).catch(() => {}),
-						submitBtn.click(),
+						submitLocator.click(),
 					]);
 				} else {
-					await submitBtn.click();
+					await submitLocator.click();
 				}
 
 				submitted = true;
@@ -830,26 +840,27 @@ export class Select extends Gadget({
 	async execute(params: this["params"]): Promise<string> {
 		try {
 			const page = this.manager.requirePage(params.pageId);
-			const element = await page.$(params.selector);
+			const locator = page.locator(params.selector);
 
-			if (!element) {
+			const count = await locator.count();
+			if (count === 0) {
 				return JSON.stringify({ error: `Element not found: ${params.selector}` });
 			}
 
 			let selected: string[];
 			if (params.value !== undefined) {
-				selected = await element.selectOption({ value: params.value });
+				selected = await locator.selectOption({ value: params.value });
 			} else if (params.label !== undefined) {
-				selected = await element.selectOption({ label: params.label });
+				selected = await locator.selectOption({ label: params.label });
 			} else if (params.index !== undefined) {
-				selected = await element.selectOption({ index: params.index });
+				selected = await locator.selectOption({ index: params.index });
 			} else {
 				return JSON.stringify({ error: "Must provide value, label, or index" });
 			}
 
 			// Get selected text
-			const selectedOption = await page.$(`${params.selector} option:checked`);
-			const selectedText = selectedOption ? await selectedOption.textContent() : "";
+			const selectedOption = page.locator(`${params.selector} option:checked`);
+			const selectedText = (await selectedOption.count()) > 0 ? await selectedOption.textContent() : "";
 
 			return JSON.stringify({
 				success: true,
@@ -885,19 +896,20 @@ export class Check extends Gadget({
 	async execute(params: this["params"]): Promise<string> {
 		try {
 			const page = this.manager.requirePage(params.pageId);
-			const element = await page.$(params.selector);
+			const locator = page.locator(params.selector);
 
-			if (!element) {
+			const count = await locator.count();
+			if (count === 0) {
 				return JSON.stringify({ error: `Element not found: ${params.selector}` });
 			}
 
 			if (params.checked) {
-				await element.check();
+				await locator.check();
 			} else {
-				await element.uncheck();
+				await locator.uncheck();
 			}
 
-			const isChecked = await element.isChecked();
+			const isChecked = await locator.isChecked();
 
 			return JSON.stringify({ success: true, checked: isChecked });
 		} catch (error) {
@@ -928,13 +940,14 @@ export class Hover extends Gadget({
 	async execute(params: this["params"]): Promise<string> {
 		try {
 			const page = this.manager.requirePage(params.pageId);
-			const element = await page.$(params.selector);
+			const locator = page.locator(params.selector);
 
-			if (!element) {
+			const count = await locator.count();
+			if (count === 0) {
 				return JSON.stringify({ error: `Element not found: ${params.selector}` });
 			}
 
-			await element.hover();
+			await locator.hover();
 
 			return JSON.stringify({ success: true });
 		} catch (error) {
@@ -982,11 +995,12 @@ export class Scroll extends Gadget({
 						: 0;
 
 			if (params.selector) {
-				const element = await page.$(params.selector);
-				if (!element) {
+				const locator = page.locator(params.selector);
+				const count = await locator.count();
+				if (count === 0) {
 					return JSON.stringify({ error: `Element not found: ${params.selector}` });
 				}
-				await element.evaluate(
+				await locator.evaluate(
 					(el: Element, delta: { x: number; y: number }) => {
 						el.scrollBy(delta.x, delta.y);
 					},
