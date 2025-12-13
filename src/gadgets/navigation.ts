@@ -40,15 +40,21 @@ export class Navigate extends Gadget({
 }
 
 export class GoBack extends Gadget({
-	description: "Navigate back in the browser history (like clicking the back button).",
+	description:
+		"Navigate back in the browser history (like clicking the back button). Returns error if no history exists.",
 	schema: z.object({
 		pageId: z.string().describe("Page ID"),
 	}),
 	examples: [
 		{
 			params: { pageId: "p1" },
-			output: '{"url":"https://previous-page.com/","title":"Previous Page"}',
+			output: '{"url":"https://previous-page.com/","title":"Previous Page","navigated":true}',
 			comment: "Go back to previous page",
+		},
+		{
+			params: { pageId: "p1" },
+			output: '{"error":"No history to go back to","url":"https://current-page.com/","title":"Current Page"}',
+			comment: "No history available",
 		},
 	],
 }) {
@@ -59,10 +65,26 @@ export class GoBack extends Gadget({
 	async execute(params: this["params"]): Promise<string> {
 		try {
 			const page = this.manager.requirePage(params.pageId);
-			await page.goBack();
+			const urlBefore = page.url();
+
+			const response = await page.goBack();
+
+			const urlAfter = page.url();
+			const title = await page.title();
+
+			// Check if navigation actually happened
+			if (response === null && urlBefore === urlAfter) {
+				return JSON.stringify({
+					error: "No history to go back to",
+					url: urlAfter,
+					title,
+				});
+			}
+
 			return JSON.stringify({
-				url: page.url(),
-				title: await page.title(),
+				url: urlAfter,
+				title,
+				navigated: urlBefore !== urlAfter,
 			});
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
@@ -72,15 +94,21 @@ export class GoBack extends Gadget({
 }
 
 export class GoForward extends Gadget({
-	description: "Navigate forward in the browser history (like clicking the forward button).",
+	description:
+		"Navigate forward in the browser history (like clicking the forward button). Returns error if no forward history exists.",
 	schema: z.object({
 		pageId: z.string().describe("Page ID"),
 	}),
 	examples: [
 		{
 			params: { pageId: "p1" },
-			output: '{"url":"https://next-page.com/","title":"Next Page"}',
+			output: '{"url":"https://next-page.com/","title":"Next Page","navigated":true}',
 			comment: "Go forward to next page",
+		},
+		{
+			params: { pageId: "p1" },
+			output: '{"error":"No forward history","url":"https://current-page.com/","title":"Current Page"}',
+			comment: "No forward history available",
 		},
 	],
 }) {
@@ -91,10 +119,26 @@ export class GoForward extends Gadget({
 	async execute(params: this["params"]): Promise<string> {
 		try {
 			const page = this.manager.requirePage(params.pageId);
-			await page.goForward();
+			const urlBefore = page.url();
+
+			const response = await page.goForward();
+
+			const urlAfter = page.url();
+			const title = await page.title();
+
+			// Check if navigation actually happened
+			if (response === null && urlBefore === urlAfter) {
+				return JSON.stringify({
+					error: "No forward history",
+					url: urlAfter,
+					title,
+				});
+			}
+
 			return JSON.stringify({
-				url: page.url(),
-				title: await page.title(),
+				url: urlAfter,
+				title,
+				navigated: urlBefore !== urlAfter,
 			});
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);

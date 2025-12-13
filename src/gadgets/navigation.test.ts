@@ -44,7 +44,7 @@ describe("Navigation Gadgets", () => {
 	});
 
 	describe("GoBack", () => {
-		it("should go back in history", async () => {
+		it("should go back in history and set navigated=true", async () => {
 			// Navigate to create history
 			const navGadget = new Navigate(manager);
 			await testGadget(navGadget, {
@@ -62,11 +62,47 @@ describe("Navigation Gadgets", () => {
 			expect(result.error).toBeUndefined();
 			const parsed = JSON.parse(result.result!);
 			expect(parsed.url).toContain("Page1");
+			expect(parsed.navigated).toBe(true);
+		});
+
+		it("should return error when no history to go back to", async () => {
+			// Create a new page with no history
+			const newPage = await manager.newPage(
+				manager.getBrowserIdForPage(pageId)!,
+			);
+			// Don't navigate - keep it at about:blank with no history
+
+			const gadget = new GoBack(manager);
+			const result = await testGadget(gadget, { pageId: newPage.pageId });
+
+			expect(result.error).toBeUndefined();
+			const parsed = JSON.parse(result.result!);
+			// When there's no history, GoBack should report it
+			// Check that either error is set OR navigated is false
+			if (parsed.error) {
+				expect(parsed.error).toBe("No history to go back to");
+			} else {
+				expect(parsed.navigated).toBe(false);
+			}
+
+			// Clean up
+			await manager.closePage(newPage.pageId);
 		});
 	});
 
 	describe("GoForward", () => {
-		it("should go forward in history", async () => {
+		it("should go forward in history after going back", async () => {
+			// Create history
+			const navGadget = new Navigate(manager);
+			await testGadget(navGadget, {
+				pageId,
+				url: "data:text/html,<h1>PageA</h1>",
+			});
+			await testGadget(navGadget, {
+				pageId,
+				url: "data:text/html,<h1>PageB</h1>",
+			});
+
 			// Go back first
 			const backGadget = new GoBack(manager);
 			await testGadget(backGadget, { pageId });
@@ -76,8 +112,29 @@ describe("Navigation Gadgets", () => {
 			const result = await testGadget(gadget, { pageId });
 
 			expect(result.error).toBeUndefined();
-			// Result should exist (may or may not have moved forward)
-			expect(result.result).toBeDefined();
+			const parsed = JSON.parse(result.result!);
+			expect(parsed.url).toContain("PageB");
+			expect(parsed.navigated).toBe(true);
+		});
+
+		it("should return error when no forward history", async () => {
+			// Create a new page with no forward history
+			const newPage = await manager.newPage(manager.getBrowserIdForPage(pageId)!);
+
+			const gadget = new GoForward(manager);
+			const result = await testGadget(gadget, { pageId: newPage.pageId });
+
+			expect(result.error).toBeUndefined();
+			const parsed = JSON.parse(result.result!);
+			// When there's no forward history, should report it
+			if (parsed.error) {
+				expect(parsed.error).toBe("No forward history");
+			} else {
+				expect(parsed.navigated).toBe(false);
+			}
+
+			// Clean up
+			await manager.closePage(newPage.pageId);
 		});
 	});
 
