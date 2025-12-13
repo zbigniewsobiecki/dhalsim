@@ -1,15 +1,16 @@
 import { Gadget, z } from "llmist";
+import type { ConsoleMessage } from "playwright-core";
 import type { IBrowserSessionManager } from "../session";
 
 export class ExecuteScript extends Gadget({
 	description:
-		"Executes JavaScript code on the page and returns the result. The script runs in the page context and can access the DOM.",
+		"Executes JavaScript on the page. Use console.log() for debugging - output is captured and returned.",
 	schema: z.object({
 		pageId: z.string().describe("Page ID"),
 		script: z
 			.string()
 			.describe(
-				"JavaScript code to execute. Use 'return' to return a value. Has access to document, window, etc.",
+				"JavaScript code to execute. Use 'return' for result. Use console.log() to debug - all output is captured.",
 			),
 	}),
 	examples: [
@@ -19,17 +20,14 @@ export class ExecuteScript extends Gadget({
 			comment: "Get page title",
 		},
 		{
-			params: { pageId: "p1", script: "return document.querySelectorAll('a').length" },
-			output: '{"result":15}',
-			comment: "Count links on page",
-		},
-		{
 			params: {
 				pageId: "p1",
-				script: "document.body.style.backgroundColor = 'red'; return 'done'",
+				script: `const items = document.querySelectorAll('.item');
+console.log('Found', items.length, 'items');
+return items.length;`,
 			},
-			output: '{"result":"done"}',
-			comment: "Modify page and return confirmation",
+			output: '{"result":5,"console":["[log] Found 5 items"]}',
+			comment: "Debug with console.log - output is captured",
 		},
 	],
 }) {
@@ -38,22 +36,41 @@ export class ExecuteScript extends Gadget({
 	}
 
 	async execute(params: this["params"]): Promise<string> {
+		const page = this.manager.requirePage(params.pageId);
+
+		// Capture console output for debugging
+		const logs: string[] = [];
+		const maxLogs = 50;
+		const maxLogLength = 500;
+
+		const consoleHandler = (msg: ConsoleMessage) => {
+			if (logs.length >= maxLogs) return;
+			const type = msg.type();
+			let text = msg.text();
+			if (text.length > maxLogLength) {
+				text = `${text.slice(0, maxLogLength)}...`;
+			}
+			logs.push(`[${type}] ${text}`);
+		};
+
+		page.on("console", consoleHandler);
+
 		try {
-			const page = this.manager.requirePage(params.pageId);
-
-			// Wrap the script in a function that we can call
-			const wrappedScript = `
-				(function() {
-					${params.script}
-				})()
-			`;
-
+			const wrappedScript = `(function() { ${params.script} })()`;
 			const result = await page.evaluate(wrappedScript);
 
-			return JSON.stringify({ result });
+			return JSON.stringify({
+				result,
+				...(logs.length > 0 && { console: logs }),
+			});
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
-			return JSON.stringify({ error: message });
+			return JSON.stringify({
+				error: message,
+				...(logs.length > 0 && { console: logs }),
+			});
+		} finally {
+			page.off("console", consoleHandler);
 		}
 	}
 }
