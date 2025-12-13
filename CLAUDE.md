@@ -1,40 +1,34 @@
 # Dhalsim
 
-Browser automation CLI powered by llmist with Playwright gadgets.
+Browser automation gadgets for llmist using Camoufox anti-detect browser.
 
-## Quick Start
+## Usage
 
-```bash
-# Run with a natural language task
-bun src/cli.ts "go to google.com and search for 'playwright browser automation'"
-
-# Run with visible browser
-bun src/cli.ts --no-headless "navigate to example.com and take a screenshot"
-
-# Use a different model
-bun src/cli.ts -m gpt4 "go to amazon.com and find wireless earbuds under $50"
-```
+See [README.md](./README.md) for usage instructions with llmist CLI and configuration options.
 
 ## Architecture
 
 ```
 src/
-├── cli.ts              # CLI entry point (commander.js)
 ├── index.ts            # Library exports
-├── logging.ts          # LLM request/response logging utilities
+├── factory.ts          # Gadget factory functions
 ├── session/
 │   ├── index.ts        # Session exports
 │   ├── manager.ts      # BrowserSessionManager (manages browsers/pages)
 │   └── types.ts        # BrowserInfo, PageInfo types
-└── gadgets/
-    ├── index.ts        # Export all gadgets
-    ├── browser.ts      # StartBrowser, CloseBrowser, ListBrowsers
-    ├── page.ts         # NewPage, ClosePage, ListPages
-    ├── navigation.ts   # Navigate, GoBack, GoForward, Reload
-    ├── content.ts      # GetPageContent, Screenshot, ListInteractiveElements
-    ├── interaction.ts  # Click, Type, Fill, PressKey, Select, Check, Hover, Scroll
-    ├── script.ts       # ExecuteScript
-    └── wait.ts         # WaitForElement, Wait
+├── gadgets/
+│   ├── index.ts        # Export all gadgets
+│   ├── browser.ts      # StartBrowser, CloseBrowser, ListBrowsers
+│   ├── page.ts         # NewPage, ClosePage, ListPages
+│   ├── navigation.ts   # Navigate, GoBack, GoForward, Reload
+│   ├── content.ts      # GetFullPageContent, Screenshot, ListInteractiveElements
+│   ├── interaction.ts  # Click, Type, Fill, PressKey, Select, Check, Hover, Scroll
+│   ├── script.ts       # ExecuteScript
+│   └── wait.ts         # WaitForElement, Wait
+├── subagents/
+│   └── dhalsim.ts      # BrowseWeb subagent (autonomous browser agent)
+└── state/
+    └── scanner.ts      # Page state scanning utilities
 ```
 
 ## Key Concepts
@@ -79,14 +73,10 @@ export class Navigate extends Gadget({
 ## Commands
 
 ```bash
-# Development
-bun run dev             # Run CLI in dev mode
 bun run typecheck       # TypeScript check
 bun run lint            # Biome lint
 bun run test            # Run tests
 bun run precheck        # lint + typecheck + test (pre-commit)
-
-# Build
 bun run build           # Build for distribution
 ```
 
@@ -117,23 +107,3 @@ const result = await testGadget(gadget, {
 ```
 
 All tests use `data:` URLs to avoid network dependencies.
-
-## Debugging
-
-### LLM Request/Response Logging
-
-Save raw LLM requests and responses for debugging (shared with llmist):
-
-```bash
-bun src/cli.ts --log-llm-requests "go to google.com"
-```
-
-Output structure:
-```
-~/.llmist/logs/requests/
-└── 2025-12-12_14-30-45/
-    ├── 0001.request    # First LLM call - formatted messages
-    ├── 0001.response   # First LLM response - raw text
-    ├── 0002.request
-    └── 0002.response
-```
