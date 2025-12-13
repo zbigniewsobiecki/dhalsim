@@ -1,6 +1,7 @@
 import { Gadget, z } from "llmist";
 import type { ConsoleMessage } from "playwright-core";
 import type { IBrowserSessionManager } from "../session";
+import { getErrorMessage, truncate } from "../utils/errors";
 
 export class ExecuteScript extends Gadget({
 	description:
@@ -40,16 +41,13 @@ return items.length;`,
 
 		// Capture console output for debugging
 		const logs: string[] = [];
-		const maxLogs = 50;
-		const maxLogLength = 500;
+		const MAX_LOGS = 50;
+		const MAX_LOG_LENGTH = 500;
 
 		const consoleHandler = (msg: ConsoleMessage) => {
-			if (logs.length >= maxLogs) return;
+			if (logs.length >= MAX_LOGS) return;
 			const type = msg.type();
-			let text = msg.text();
-			if (text.length > maxLogLength) {
-				text = `${text.slice(0, maxLogLength)}...`;
-			}
+			const text = truncate(msg.text(), MAX_LOG_LENGTH);
 			logs.push(`[${type}] ${text}`);
 		};
 
@@ -64,9 +62,8 @@ return items.length;`,
 				...(logs.length > 0 && { console: logs }),
 			});
 		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error);
 			return JSON.stringify({
-				error: message,
+				error: getErrorMessage(error),
 				...(logs.length > 0 && { console: logs }),
 			});
 		} finally {

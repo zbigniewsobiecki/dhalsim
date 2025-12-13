@@ -1,5 +1,6 @@
 import { Gadget, z } from "llmist";
 import type { IBrowserSessionManager } from "../session";
+import { getErrorMessage } from "../utils/errors";
 
 export class Navigate extends Gadget({
 	description: "Navigate a page to a specific URL.",
@@ -33,8 +34,7 @@ export class Navigate extends Gadget({
 				title: await page.title(),
 			});
 		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error);
-			return JSON.stringify({ error: message });
+			return JSON.stringify({ error: getErrorMessage(error) });
 		}
 	}
 }
@@ -87,8 +87,7 @@ export class GoBack extends Gadget({
 				navigated: urlBefore !== urlAfter,
 			});
 		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error);
-			return JSON.stringify({ error: message });
+			return JSON.stringify({ error: getErrorMessage(error) });
 		}
 	}
 }
@@ -141,8 +140,7 @@ export class GoForward extends Gadget({
 				navigated: urlBefore !== urlAfter,
 			});
 		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error);
-			return JSON.stringify({ error: message });
+			return JSON.stringify({ error: getErrorMessage(error) });
 		}
 	}
 }
@@ -174,8 +172,7 @@ export class Reload extends Gadget({
 				title: await page.title(),
 			});
 		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error);
-			return JSON.stringify({ error: message });
+			return JSON.stringify({ error: getErrorMessage(error) });
 		}
 	}
 }

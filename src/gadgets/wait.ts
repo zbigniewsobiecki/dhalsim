@@ -1,6 +1,8 @@
 import { Gadget, z } from "llmist";
 import type { IBrowserSessionManager } from "../session";
 import { selectorSchema } from "./selector-validator";
+import { getErrorMessage, truncate } from "../utils/errors";
+import { ELEMENT_TEXT_MAX_LENGTH } from "../utils/constants";
 
 export class WaitForElement extends Gadget({
 	description:
@@ -46,7 +48,7 @@ export class WaitForElement extends Gadget({
 				const locator = page.locator(params.selector);
 				const count = await locator.count();
 				if (count > 0) {
-					elementText = ((await locator.textContent()) || "").trim().slice(0, 100);
+					elementText = truncate(((await locator.textContent()) || "").trim(), ELEMENT_TEXT_MAX_LENGTH);
 				}
 			}
 
@@ -55,8 +57,7 @@ export class WaitForElement extends Gadget({
 				...(elementText ? { elementText } : {}),
 			});
 		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error);
-			return JSON.stringify({ error: message });
+			return JSON.stringify({ error: getErrorMessage(error) });
 		}
 	}
 }
@@ -75,9 +76,11 @@ export class Wait extends Gadget({
 		},
 	],
 }) {
-	// No manager needed for simple wait
-	constructor(_manager: IBrowserSessionManager) {
+	// Note: manager is required for consistent factory API but not used by this simple gadget
+	constructor(manager: IBrowserSessionManager) {
 		super();
+		// Prevent unused variable warning
+		void manager;
 	}
 
 	async execute(params: this["params"]): Promise<string> {

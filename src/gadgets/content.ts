@@ -2,6 +2,8 @@ import { Gadget, z, resultWithImage, type GadgetExecuteResultWithMedia } from "l
 import sharp from "sharp";
 import type { IBrowserSessionManager } from "../session";
 import { optionalSelectorSchema, selectorsArraySchema } from "./selector-validator";
+import { getErrorMessage } from "../utils/errors";
+import { MAX_SELECTORS_PER_QUERY } from "../utils/constants";
 
 /** Claude's max image dimension is 8000px */
 const MAX_IMAGE_DIMENSION = 8000;
@@ -130,9 +132,11 @@ export class GetFullPageContent extends Gadget({
 			// Multi-selector mode: query multiple elements at once
 			// Results are returned in same order as input selectors (no selector echoed back to avoid LLM learning to construct them)
 			if (params.selectors && params.selectors.length > 0) {
+				// Limit selectors to prevent DoS
+				const selectors = params.selectors.slice(0, MAX_SELECTORS_PER_QUERY);
 				const results: Array<{ text?: string; error?: string }> = [];
 
-				for (const selector of params.selectors) {
+				for (const selector of selectors) {
 					try {
 						const locator = page.locator(selector);
 						const count = await locator.count();
@@ -144,12 +148,16 @@ export class GetFullPageContent extends Gadget({
 						text = text.replace(/\s+/g, " ").trim();
 						results.push({ text });
 					} catch (error) {
-						const message = error instanceof Error ? error.message : String(error);
-						results.push({ error: message });
+						results.push({ error: getErrorMessage(error) });
 					}
 				}
 
-				return JSON.stringify({ results });
+				return JSON.stringify({
+					results,
+					...(params.selectors.length > MAX_SELECTORS_PER_QUERY
+						? { warning: `Truncated to ${MAX_SELECTORS_PER_QUERY} selectors` }
+						: {}),
+				});
 			}
 
 			// Single selector or whole page mode (backward compatible)
@@ -170,8 +178,7 @@ export class GetFullPageContent extends Gadget({
 
 			return JSON.stringify({ text });
 		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error);
-			return JSON.stringify({ error: message });
+			return JSON.stringify({ error: getErrorMessage(error) });
 		}
 	}
 }
@@ -243,8 +250,7 @@ export class Screenshot extends Gadget({
 				},
 			);
 		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error);
-			return JSON.stringify({ error: message });
+			return JSON.stringify({ error: getErrorMessage(error) });
 		}
 	}
 }

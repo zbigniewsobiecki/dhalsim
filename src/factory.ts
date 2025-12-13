@@ -5,19 +5,12 @@ import { getSessionManager } from "./session";
 // Content gadgets
 import { GetFullPageContent, Screenshot } from "./gadgets/content";
 // Interaction gadgets
-import {
-	Check,
-	Click,
-	DismissOverlays,
-	Fill,
-	FillForm,
-	FillPinCode,
-	Hover,
-	PressKey,
-	Scroll,
-	Select,
-	Type,
-} from "./gadgets/interaction";
+import { Click } from "./gadgets/click";
+import { Type, Fill, FillForm, FillPinCode } from "./gadgets/form";
+import { PressKey } from "./gadgets/keyboard";
+import { Select, Check } from "./gadgets/selection";
+import { Hover, Scroll } from "./gadgets/scroll";
+import { DismissOverlays } from "./gadgets/overlays";
 // Navigation gadgets
 import { GoBack, GoForward, Navigate, Reload } from "./gadgets/navigation";
 // Page management gadgets

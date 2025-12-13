@@ -1,20 +1,23 @@
 // Content extraction
 export { GetFullPageContent, Screenshot } from "./content";
-// Interactions
-export {
-	Check,
-	Click,
-	DismissOverlays,
-	Fill,
-	FillForm,
-	FillPinCode,
-	Hover,
-	PressKey,
-	Scroll,
-	Select,
-	Type,
-	dismissOverlaysOnPage,
-} from "./interaction";
+
+// Click
+export { Click } from "./click";
+
+// Form interactions
+export { Type, Fill, FillForm, FillPinCode } from "./form";
+
+// Keyboard
+export { PressKey } from "./keyboard";
+
+// Selection (dropdown, checkbox)
+export { Select, Check } from "./selection";
+
+// Scroll and hover
+export { Hover, Scroll } from "./scroll";
+
+// Overlay dismissal
+export { DismissOverlays, dismissOverlaysOnPage } from "./overlays";
 // Navigation
 export { GoBack, GoForward, Navigate, Reload } from "./navigation";
 // Page management

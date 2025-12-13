@@ -1,5 +1,6 @@
 import { Gadget, z } from "llmist";
 import type { IBrowserSessionManager } from "../session";
+import { getErrorMessage } from "../utils/errors";
 
 export class NewPage extends Gadget({
 	description:
@@ -31,8 +32,7 @@ export class NewPage extends Gadget({
 			const result = await this.manager.newPage(params.browserId, params.url);
 			return JSON.stringify(result);
 		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error);
-			return JSON.stringify({ error: message });
+			return JSON.stringify({ error: getErrorMessage(error) });
 		}
 	}
 }
@@ -59,8 +59,7 @@ export class ClosePage extends Gadget({
 			const result = await this.manager.closePage(params.pageId);
 			return JSON.stringify(result);
 		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error);
-			return JSON.stringify({ error: message });
+			return JSON.stringify({ error: getErrorMessage(error) });
 		}
 	}
 }

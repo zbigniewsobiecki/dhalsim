@@ -62,6 +62,8 @@ interface PageState {
 	dataAttributes: string[];
 	collapsedSections: CollapsedSection[];
 	selectOptions: SelectWithOptions[];
+	/** Errors encountered during scanning (partial state indicator) */
+	scanErrors: string[];
 }
 
 /**
@@ -139,16 +141,38 @@ export class PageStateScanner {
 	 * Scan a single page for state.
 	 */
 	private async scanPage(pageId: string, page: Page): Promise<PageState> {
-		const [url, title, content, structure, elements, dataAttributes, collapsedSections, selectOptions] = await Promise.all([
-			page.url(),
-			page.title(),
-			this.getContentSummary(page),
-			this.getStructure(page),
-			this.getInteractiveElements(page),
-			this.getDataAttributes(page),
-			this.getCollapsedSections(page),
-			this.getSelectOptions(page),
-		]);
+		const scanErrors: string[] = [];
+
+		// Wrap each scan operation to capture errors
+		const safeCall = async <T>(
+			fn: () => Promise<T>,
+			fallback: T,
+			errorLabel: string,
+		): Promise<T> => {
+			try {
+				return await fn();
+			} catch (e) {
+				const msg = e instanceof Error ? e.message : String(e);
+				scanErrors.push(`${errorLabel}: ${msg}`);
+				return fallback;
+			}
+		};
+
+		const [url, title, content, structure, elements, dataAttributes, collapsedSections, selectOptions] =
+			await Promise.all([
+				page.url(),
+				page.title(),
+				safeCall(() => this.getContentSummary(page), "[Error reading content]", "content"),
+				safeCall(() => this.getStructure(page), "", "structure"),
+				safeCall(
+					() => this.getInteractiveElements(page),
+					{ inputs: [], buttons: [], links: [], selects: [], textareas: [], menuitems: [], checkboxes: [] },
+					"elements",
+				),
+				safeCall(() => this.getDataAttributes(page), [], "dataAttributes"),
+				safeCall(() => this.getCollapsedSections(page), [], "collapsedSections"),
+				safeCall(() => this.getSelectOptions(page), [], "selectOptions"),
+			]);
 
 		return {
 			pageId,
@@ -160,6 +184,7 @@ export class PageStateScanner {
 			dataAttributes,
 			collapsedSections,
 			selectOptions,
+			scanErrors,
 		};
 	}
 
@@ -167,37 +192,29 @@ export class PageStateScanner {
 	 * Get all data-test attribute values from the page.
 	 */
 	private async getDataAttributes(page: Page): Promise<string[]> {
-		try {
-			return await page.evaluate(() => {
-				const attrs = new Set<string>();
-				document.querySelectorAll("[data-test]").forEach((el) => {
-					const val = el.getAttribute("data-test");
-					if (val) attrs.add(val);
-				});
-				return [...attrs].sort();
+		return await page.evaluate(() => {
+			const attrs = new Set<string>();
+			document.querySelectorAll("[data-test]").forEach((el) => {
+				const val = el.getAttribute("data-test");
+				if (val) attrs.add(val);
 			});
-		} catch {
-			return [];
-		}
+			return [...attrs].sort();
+		});
 	}
 
 	/**
 	 * Get visible text content from page.
 	 */
 	private async getContentSummary(page: Page): Promise<string> {
-		try {
-			let text = await page.innerText("body");
-			// Normalize whitespace
-			text = text.replace(/\s+/g, " ").trim();
+		let text = await page.innerText("body");
+		// Normalize whitespace
+		text = text.replace(/\s+/g, " ").trim();
 
-			if (this.config.maxContentLength > 0 && text.length > this.config.maxContentLength) {
-				text = `${text.slice(0, this.config.maxContentLength)}... [truncated - use GetFullPageContent for full text]`;
-			}
-
-			return text;
-		} catch {
-			return "[Unable to read content]";
+		if (this.config.maxContentLength > 0 && text.length > this.config.maxContentLength) {
+			text = `${text.slice(0, this.config.maxContentLength)}... [truncated - use GetFullPageContent for full text]`;
 		}
+
+		return text;
 	}
 
 	/**
@@ -206,8 +223,7 @@ export class PageStateScanner {
 	private async getStructure(page: Page): Promise<string> {
 		if (!this.config.includeStructure) return "";
 
-		try {
-			return await page.evaluate(() => {
+		return await page.evaluate(() => {
 				const result: string[] = [];
 				const indent = (level: number) => "  ".repeat(level);
 
@@ -251,10 +267,7 @@ export class PageStateScanner {
 				});
 
 				return result.join("\n");
-			});
-		} catch {
-			return "";
-		}
+		});
 	}
 
 	/**
@@ -453,6 +466,15 @@ export class PageStateScanner {
 		lines.push(`URL: ${state.url}`);
 		lines.push(`Title: ${state.title}`);
 
+		// Show scan errors prominently if any occurred
+		if (state.scanErrors.length > 0) {
+			lines.push("");
+			lines.push("⚠️ PARTIAL STATE (some data may be missing):");
+			for (const err of state.scanErrors) {
+				lines.push(`  - ${err}`);
+			}
+		}
+
 		if (this.config.includeSummary && state.content) {
 			lines.push("");
 			lines.push("CONTENT:");
@@ -581,8 +603,7 @@ export class PageStateScanner {
 	 * This allows the agent to see what options are available BEFORE expanding.
 	 */
 	private async getCollapsedSections(page: Page): Promise<CollapsedSection[]> {
-		try {
-			return await page.evaluate(() => {
+		return await page.evaluate(() => {
 				const sections: Array<{
 					toggleSelector: string;
 					label: string;
@@ -670,10 +691,7 @@ export class PageStateScanner {
 				}
 
 				return sections;
-			});
-		} catch {
-			return [];
-		}
+		});
 	}
 
 	/**
@@ -681,8 +699,7 @@ export class PageStateScanner {
 	 * This allows the agent to see dropdown options BEFORE opening them.
 	 */
 	private async getSelectOptions(page: Page): Promise<SelectWithOptions[]> {
-		try {
-			return await page.evaluate(() => {
+		return await page.evaluate(() => {
 				const results: Array<{
 					selector: string;
 					label: string;
@@ -741,10 +758,7 @@ export class PageStateScanner {
 				}
 
 				return results;
-			});
-		} catch {
-			return [];
-		}
+		});
 	}
 
 	/**

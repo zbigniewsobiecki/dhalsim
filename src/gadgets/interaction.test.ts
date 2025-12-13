@@ -1,17 +1,12 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { testGadget } from "llmist/testing";
 import { TestBrowserSessionManager } from "../session/test-manager";
-import {
-	Check,
-	Click,
-	DismissOverlays,
-	Fill,
-	Hover,
-	PressKey,
-	Scroll,
-	Select,
-	Type,
-} from "./interaction";
+import { Click } from "./click";
+import { Type, Fill } from "./form";
+import { PressKey } from "./keyboard";
+import { Select, Check } from "./selection";
+import { Hover, Scroll } from "./scroll";
+import { DismissOverlays } from "./overlays";
 import { Navigate } from "./navigation";
 
 const TEST_HTML = `
