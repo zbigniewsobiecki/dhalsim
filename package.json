@@ -9,11 +9,11 @@
 		"webasto": "dist/cli.js"
 	},
 	"llmist": {
-		"gadgets": "./dist/gadgets/index.js",
-		"factory": "./dist/factory.js",
+		"gadgets": "./dist/index.js",
+		"factory": "./dist/index.js",
 		"subagents": {
 			"BrowseWeb": {
-				"entryPoint": "./dist/subagents/browse-web.js",
+				"entryPoint": "./dist/index.js",
 				"export": "BrowseWeb",
 				"description": "Browse websites and accomplish tasks autonomously",
 				"uses": ["Navigate", "Click", "Screenshot", "GetFullPageContent", "Fill"],
@@ -33,7 +33,7 @@
 		}
 	},
 	"scripts": {
-		"build": "bun build src/cli.ts --outdir dist --target node --external playwright-core --external camoufox-js --external chromium-bidi --external electron && bun run build:types",
+		"build": "bun build src/cli.ts src/index.ts --outdir dist --target node --external playwright-core --external camoufox-js --external chromium-bidi --external electron && bun run build:types",
 		"build:types": "tsc --emitDeclarationOnly",
 		"dev": "bun run src/cli.ts",
 		"dev:node": "bun run build && node dist/cli.js",
