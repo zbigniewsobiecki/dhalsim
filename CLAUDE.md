@@ -34,7 +34,7 @@ src/
     ├── content.ts      # GetPageContent, Screenshot, ListInteractiveElements
     ├── interaction.ts  # Click, Type, Fill, PressKey, Select, Check, Hover, Scroll
     ├── script.ts       # ExecuteScript
-    └── wait.ts         # WaitForElement, WaitForNavigation, Wait
+    └── wait.ts         # WaitForElement, Wait
 ```
 
 ## Key Concepts
@@ -100,7 +100,7 @@ bun run build           # Build for distribution
 | Content | GetPageContent, Screenshot, ListInteractiveElements |
 | Interaction | Click, Type, Fill, PressKey, Select, Check, Hover, Scroll |
 | Script | ExecuteScript |
-| Wait | WaitForElement, WaitForNavigation, Wait |
+| Wait | WaitForElement, Wait |
 
 ## Testing
 

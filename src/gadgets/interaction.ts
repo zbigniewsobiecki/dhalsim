@@ -265,7 +265,7 @@ export class DismissOverlays extends Gadget({
 
 export class Click extends Gadget({
 	description:
-		"Clicks on an element. Use selectors from <CurrentBrowserState>. If click fails due to another element covering it, try force: true.",
+		"Clicks on an element. Use selectors from <CurrentBrowserState>. Auto-scrolls into view if needed. If click fails due to another element covering it, try force: true.",
 	schema: z.object({
 		pageId: z.string().describe("Page ID"),
 		selector: selectorSchema.describe("CSS selector of element to click"),
@@ -292,6 +292,11 @@ export class Click extends Gadget({
 			output: '{"success":true,"elementText":"Menu Item"}',
 			comment: "Force click when element is partially covered",
 		},
+		{
+			params: { pageId: "p1", selector: "#offscreen-btn", button: "left", clickCount: 1, force: false },
+			output: '{"success":true,"elementText":"Offscreen","scrolledIntoView":true}',
+			comment: "Element was scrolled into view before clicking",
+		},
 	],
 }) {
 	constructor(private manager: IBrowserSessionManager) {
@@ -308,6 +313,23 @@ export class Click extends Gadget({
 			}
 
 			const text = ((await element.textContent()) || "").trim().slice(0, 100);
+			let scrolledIntoView = false;
+
+			// Check if element is in viewport, scroll if needed
+			const isInViewport = await element.evaluate((el) => {
+				const rect = el.getBoundingClientRect();
+				return (
+					rect.top >= 0 &&
+					rect.left >= 0 &&
+					rect.bottom <= window.innerHeight &&
+					rect.right <= window.innerWidth
+				);
+			});
+
+			if (!isInViewport) {
+				await element.scrollIntoViewIfNeeded();
+				scrolledIntoView = true;
+			}
 
 			// Human-like: small delay before clicking (simulates reaction time)
 			await humanDelay(30, 80);
@@ -320,7 +342,11 @@ export class Click extends Gadget({
 						clickCount: params.clickCount,
 						timeout: 5000, // Short timeout - fail fast if intercepted
 					});
-					return JSON.stringify({ success: true, elementText: text });
+					return JSON.stringify({
+						success: true,
+						elementText: text,
+						...(scrolledIntoView ? { scrolledIntoView: true } : {}),
+					});
 				} catch (firstError) {
 					const msg = firstError instanceof Error ? firstError.message : String(firstError);
 					// If intercepted by another element, auto-retry with force
@@ -330,7 +356,12 @@ export class Click extends Gadget({
 							clickCount: params.clickCount,
 							force: true,
 						});
-						return JSON.stringify({ success: true, elementText: text, forcedClick: true });
+						return JSON.stringify({
+							success: true,
+							elementText: text,
+							forcedClick: true,
+							...(scrolledIntoView ? { scrolledIntoView: true } : {}),
+						});
 					}
 					throw firstError;
 				}
@@ -343,7 +374,11 @@ export class Click extends Gadget({
 				force: true,
 			});
 
-			return JSON.stringify({ success: true, elementText: text });
+			return JSON.stringify({
+				success: true,
+				elementText: text,
+				...(scrolledIntoView ? { scrolledIntoView: true } : {}),
+			});
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
 			return JSON.stringify({ error: message });

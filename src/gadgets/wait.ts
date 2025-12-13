@@ -60,50 +60,6 @@ export class WaitForElement extends Gadget({
 	}
 }
 
-export class WaitForNavigation extends Gadget({
-	description:
-		"Waits for a navigation event to complete. Useful after clicking a link that causes page navigation.",
-	schema: z.object({
-		pageId: z.string().describe("Page ID"),
-		url: z.string().optional().describe("URL pattern to wait for (glob or regex)"),
-		timeout: z.number().default(30000).describe("Timeout in milliseconds"),
-	}),
-	examples: [
-		{
-			params: { pageId: "p1", timeout: 30000 },
-			output: '{"url":"https://example.com/new-page","title":"New Page"}',
-			comment: "Wait for navigation to complete",
-		},
-		{
-			params: { pageId: "p1", url: "**/success**", timeout: 30000 },
-			output: '{"url":"https://example.com/success","title":"Success"}',
-			comment: "Wait for specific URL pattern",
-		},
-	],
-}) {
-	constructor(private manager: IBrowserSessionManager) {
-		super();
-	}
-
-	async execute(params: this["params"]): Promise<string> {
-		try {
-			const page = this.manager.requirePage(params.pageId);
-
-			await page.waitForURL(params.url || "**", {
-				timeout: params.timeout,
-			}); // Uses Playwright default 'load'
-
-			return JSON.stringify({
-				url: page.url(),
-				title: await page.title(),
-			});
-		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error);
-			return JSON.stringify({ error: message });
-		}
-	}
-}
-
 export class Wait extends Gadget({
 	description:
 		"Waits for a specified amount of time. Use sparingly - prefer WaitForElement when possible.",

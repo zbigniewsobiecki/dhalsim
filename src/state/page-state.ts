@@ -28,6 +28,24 @@ interface ElementInfo {
 	href?: string;
 }
 
+interface CollapsedSection {
+	/** Selector for the toggle button/header that expands this section */
+	toggleSelector: string;
+	/** Label/text of the collapsed section */
+	label: string;
+	/** Items inside the collapsed section (checkboxes, options, etc.) */
+	items: string[];
+}
+
+interface SelectWithOptions {
+	/** Selector for the select element */
+	selector: string;
+	/** Label or placeholder for the select */
+	label: string;
+	/** Available options with their values */
+	options: Array<{ value: string; text: string }>;
+}
+
 interface PageState {
 	pageId: string;
 	url: string;
@@ -42,6 +60,8 @@ interface PageState {
 	menuitems: ElementInfo[];
 	checkboxes: ElementInfo[];
 	dataAttributes: string[];
+	collapsedSections: CollapsedSection[];
+	selectOptions: SelectWithOptions[];
 }
 
 /**
@@ -119,13 +139,15 @@ export class PageStateScanner {
 	 * Scan a single page for state.
 	 */
 	private async scanPage(pageId: string, page: Page): Promise<PageState> {
-		const [url, title, content, structure, elements, dataAttributes] = await Promise.all([
+		const [url, title, content, structure, elements, dataAttributes, collapsedSections, selectOptions] = await Promise.all([
 			page.url(),
 			page.title(),
 			this.getContentSummary(page),
 			this.getStructure(page),
 			this.getInteractiveElements(page),
 			this.getDataAttributes(page),
+			this.getCollapsedSections(page),
+			this.getSelectOptions(page),
 		]);
 
 		return {
@@ -136,6 +158,8 @@ export class PageStateScanner {
 			structure,
 			...elements,
 			dataAttributes,
+			collapsedSections,
+			selectOptions,
 		};
 	}
 
@@ -483,6 +507,27 @@ export class PageStateScanner {
 			lines.push(...this.formatElements(state.checkboxes));
 		}
 
+		// Show collapsed sections so agent can see options before expanding
+		if (state.collapsedSections.length > 0) {
+			lines.push("");
+			lines.push("COLLAPSED SECTIONS (click to expand, then interact with items):");
+			for (const section of state.collapsedSections) {
+				lines.push(`  ${section.toggleSelector} "${section.label}"`);
+				lines.push(`    Items: ${section.items.join(", ")}`);
+			}
+		}
+
+		// Show select options so agent can see dropdown choices before opening
+		if (state.selectOptions.length > 0) {
+			lines.push("");
+			lines.push("SELECT OPTIONS (use SelectOption gadget):");
+			for (const select of state.selectOptions) {
+				lines.push(`  ${select.selector} "${select.label}"`);
+				const optionList = select.options.map((o) => o.text || o.value).join(", ");
+				lines.push(`    Options: ${optionList}`);
+			}
+		}
+
 		// Show data-test attributes for ExecuteScript use
 		if (state.dataAttributes.length > 0) {
 			lines.push("");
@@ -529,6 +574,177 @@ export class PageStateScanner {
 	 */
 	private escapeCSSSelector(str: string): string {
 		return str.replace(/([!"#$%&'()*+,./:;<=>?@[\\\]^`{|}~])/g, "\\$1");
+	}
+
+	/**
+	 * Scan for collapsed sections (accordions, panels) and extract their contents.
+	 * This allows the agent to see what options are available BEFORE expanding.
+	 */
+	private async getCollapsedSections(page: Page): Promise<CollapsedSection[]> {
+		try {
+			return await page.evaluate(() => {
+				const sections: Array<{
+					toggleSelector: string;
+					label: string;
+					items: string[];
+				}> = [];
+
+				// Find elements with aria-expanded="false" (collapsed accordions/panels)
+				const toggles = Array.from(document.querySelectorAll('[aria-expanded="false"]'));
+
+				for (const toggle of toggles) {
+					// Build selector for the toggle button
+					let toggleSelector = "";
+					const toggleId = toggle.id;
+					const dataTestId = toggle.getAttribute("data-testid");
+					const ariaLabel = toggle.getAttribute("aria-label");
+					const toggleText = (toggle.textContent || "").trim().slice(0, 50);
+
+					if (dataTestId) {
+						toggleSelector = `[data-testid="${dataTestId}"]`;
+					} else if (toggleId) {
+						toggleSelector = `#${toggleId}`;
+					} else if (ariaLabel) {
+						toggleSelector = `[aria-label="${ariaLabel}"]`;
+					} else if (toggleText) {
+						toggleSelector = `text="${toggleText}"`;
+					} else {
+						continue; // Can't identify this toggle
+					}
+
+					// Find the controlled content area
+					const controlsId = toggle.getAttribute("aria-controls");
+					let contentEl: Element | null = null;
+
+					if (controlsId) {
+						contentEl = document.getElementById(controlsId);
+					} else {
+						// Try to find adjacent sibling or parent's next sibling
+						contentEl = toggle.nextElementSibling;
+						if (!contentEl) {
+							const parent = toggle.parentElement;
+							if (parent) {
+								contentEl = parent.nextElementSibling;
+							}
+						}
+					}
+
+					if (!contentEl) continue;
+
+					// Extract items from the collapsed content
+					const items: string[] = [];
+
+					// Look for checkboxes
+					contentEl.querySelectorAll("input[type='checkbox'], input[type='radio'], [role='checkbox']").forEach((checkbox) => {
+						const label = checkbox.getAttribute("aria-label") ||
+							(checkbox.parentElement?.textContent || "").trim();
+						if (label) items.push(label.slice(0, 60));
+					});
+
+					// Look for labels containing checkboxes
+					contentEl.querySelectorAll("label").forEach((label) => {
+						const hasCheckbox = label.querySelector("input[type='checkbox'], input[type='radio']");
+						if (hasCheckbox) {
+							const text = (label.textContent || "").trim();
+							if (text && !items.includes(text.slice(0, 60))) {
+								items.push(text.slice(0, 60));
+							}
+						}
+					});
+
+					// Look for options/links/list items
+					contentEl.querySelectorAll("a, [role='option'], [role='menuitem'], li").forEach((item) => {
+						const text = (item.textContent || "").trim();
+						if (text && text.length > 1 && !items.includes(text.slice(0, 60))) {
+							items.push(text.slice(0, 60));
+						}
+					});
+
+					if (items.length > 0) {
+						sections.push({
+							toggleSelector,
+							label: toggleText || ariaLabel || "Collapsed Section",
+							items: items.slice(0, 20), // Limit items per section
+						});
+					}
+				}
+
+				return sections;
+			});
+		} catch {
+			return [];
+		}
+	}
+
+	/**
+	 * Get all <select> elements with their available options.
+	 * This allows the agent to see dropdown options BEFORE opening them.
+	 */
+	private async getSelectOptions(page: Page): Promise<SelectWithOptions[]> {
+		try {
+			return await page.evaluate(() => {
+				const results: Array<{
+					selector: string;
+					label: string;
+					options: Array<{ value: string; text: string }>;
+				}> = [];
+
+				const selects = Array.from(document.querySelectorAll("select"));
+
+				for (const select of selects) {
+					// Build selector
+					let selector = "";
+					const id = select.id;
+					const name = select.getAttribute("name");
+					const dataTestId = select.getAttribute("data-testid");
+					const ariaLabel = select.getAttribute("aria-label");
+
+					if (dataTestId) {
+						selector = `[data-testid="${dataTestId}"]`;
+					} else if (id) {
+						selector = `#${id}`;
+					} else if (name) {
+						selector = `select[name="${name}"]`;
+					} else {
+						continue; // Can't reliably identify this select
+					}
+
+					// Get label from associated <label> element or aria-label
+					let label = ariaLabel || "";
+					if (!label) {
+						const labelEl = id
+							? document.querySelector(`label[for="${id}"]`)
+							: select.closest("label");
+						if (labelEl) {
+							label = (labelEl.textContent || "").trim();
+						}
+					}
+
+					// Extract options
+					const options: Array<{ value: string; text: string }> = [];
+					Array.from(select.querySelectorAll("option")).forEach((option: HTMLOptionElement) => {
+						const value = option.value;
+						const text = (option.textContent || "").trim();
+						// Skip placeholder options
+						if (value || (text && !text.match(/^(select|choose|--)/i))) {
+							options.push({ value, text: text.slice(0, 50) });
+						}
+					});
+
+					if (options.length > 0) {
+						results.push({
+							selector,
+							label: label || "Select",
+							options: options.slice(0, 30), // Limit options
+						});
+					}
+				}
+
+				return results;
+			});
+		} catch {
+			return [];
+		}
 	}
 
 	/**

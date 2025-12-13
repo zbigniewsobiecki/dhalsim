@@ -24,7 +24,7 @@ export { ClosePage, ListPages, NewPage } from "./page";
 export { ExecuteScript } from "./script";
 
 // Waiting
-export { Wait, WaitForElement, WaitForNavigation } from "./wait";
+export { Wait, WaitForElement } from "./wait";
 
 // User input
 export { RequestUserAssistance } from "./user-input";

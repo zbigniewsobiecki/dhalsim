@@ -445,4 +445,233 @@ describe("PageStateScanner", () => {
 			await manager.closePage(testPageId);
 		});
 	});
+
+	describe("collapsed sections detection", () => {
+		it("should detect collapsed sections with aria-expanded=false and show their items", async () => {
+			const collapsedHtml = `
+				<!DOCTYPE html>
+				<html>
+				<head><title>Collapsed Sections</title></head>
+				<body>
+					<button id="filter-toggle" aria-expanded="false" aria-controls="filter-panel">
+						Filters
+					</button>
+					<div id="filter-panel" style="display:none;">
+						<label><input type="checkbox" value="remote"> Remote work</label>
+						<label><input type="checkbox" value="hybrid"> Hybrid</label>
+						<label><input type="checkbox" value="onsite"> On-site</label>
+					</div>
+				</body>
+				</html>
+			`;
+			const { pageId: testPageId } = await manager.newPage(
+				manager.listBrowsers()[0].id,
+				`data:text/html,${encodeURIComponent(collapsedHtml)}`,
+			);
+
+			const state = await scanner.scanAllPages();
+
+			// Should show COLLAPSED SECTIONS
+			expect(state).toContain("COLLAPSED SECTIONS");
+			expect(state).toContain("#filter-toggle");
+			expect(state).toContain("Filters");
+			// Should show items inside the collapsed section
+			expect(state).toContain("Remote work");
+			expect(state).toContain("Hybrid");
+			expect(state).toContain("On-site");
+
+			// Clean up
+			await manager.closePage(testPageId);
+		});
+
+		it("should detect collapsed sections using data-testid for toggle selector", async () => {
+			const collapsedHtml = `
+				<!DOCTYPE html>
+				<html>
+				<head><title>Collapsed with data-testid</title></head>
+				<body>
+					<button data-testid="salary-toggle" aria-expanded="false" aria-controls="salary-options">
+						Salary Range
+					</button>
+					<div id="salary-options" style="display:none;">
+						<label><input type="checkbox"> $50k - $75k</label>
+						<label><input type="checkbox"> $75k - $100k</label>
+					</div>
+				</body>
+				</html>
+			`;
+			const { pageId: testPageId } = await manager.newPage(
+				manager.listBrowsers()[0].id,
+				`data:text/html,${encodeURIComponent(collapsedHtml)}`,
+			);
+
+			const state = await scanner.scanAllPages();
+
+			// Should use data-testid as selector
+			expect(state).toContain('[data-testid="salary-toggle"]');
+			expect(state).toContain("Salary Range");
+
+			// Clean up
+			await manager.closePage(testPageId);
+		});
+
+		it("should not show COLLAPSED SECTIONS when none exist", async () => {
+			const noCollapsedHtml = `
+				<!DOCTYPE html>
+				<html>
+				<head><title>No Collapsed</title></head>
+				<body>
+					<button aria-expanded="true">Already Expanded</button>
+					<p>No collapsed sections here</p>
+				</body>
+				</html>
+			`;
+			const { pageId: testPageId } = await manager.newPage(
+				manager.listBrowsers()[0].id,
+				`data:text/html,${encodeURIComponent(noCollapsedHtml)}`,
+			);
+
+			const state = await scanner.scanAllPages();
+
+			// Should NOT show COLLAPSED SECTIONS
+			expect(state).not.toContain("COLLAPSED SECTIONS");
+
+			// Clean up
+			await manager.closePage(testPageId);
+		});
+	});
+
+	describe("select options detection", () => {
+		it("should show SELECT OPTIONS with available options from <select> elements", async () => {
+			const selectHtml = `
+				<!DOCTYPE html>
+				<html>
+				<head><title>Select Options</title></head>
+				<body>
+					<label for="country-select">Country</label>
+					<select id="country-select">
+						<option value="">-- Select --</option>
+						<option value="us">United States</option>
+						<option value="uk">United Kingdom</option>
+						<option value="de">Germany</option>
+					</select>
+				</body>
+				</html>
+			`;
+			const { pageId: testPageId } = await manager.newPage(
+				manager.listBrowsers()[0].id,
+				`data:text/html,${encodeURIComponent(selectHtml)}`,
+			);
+
+			const state = await scanner.scanAllPages();
+
+			// Should show SELECT OPTIONS section
+			expect(state).toContain("SELECT OPTIONS");
+			expect(state).toContain("#country-select");
+			expect(state).toContain("Country");
+			// Should list the options
+			expect(state).toContain("United States");
+			expect(state).toContain("United Kingdom");
+			expect(state).toContain("Germany");
+
+			// Clean up
+			await manager.closePage(testPageId);
+		});
+
+		it("should use name attribute when no id for select", async () => {
+			const selectHtml = `
+				<!DOCTYPE html>
+				<html>
+				<head><title>Select with name</title></head>
+				<body>
+					<select name="language">
+						<option value="en">English</option>
+						<option value="es">Spanish</option>
+					</select>
+				</body>
+				</html>
+			`;
+			const { pageId: testPageId } = await manager.newPage(
+				manager.listBrowsers()[0].id,
+				`data:text/html,${encodeURIComponent(selectHtml)}`,
+			);
+
+			const state = await scanner.scanAllPages();
+
+			// Should use name attribute
+			expect(state).toContain('select[name="language"]');
+			expect(state).toContain("English");
+			expect(state).toContain("Spanish");
+
+			// Clean up
+			await manager.closePage(testPageId);
+		});
+
+		it("should skip placeholder options that match select/choose/--", async () => {
+			const selectHtml = `
+				<!DOCTYPE html>
+				<html>
+				<head><title>Select with placeholder</title></head>
+				<body>
+					<select id="size">
+						<option value="">Select size...</option>
+						<option value="">-- Choose one --</option>
+						<option value="s">Small</option>
+						<option value="m">Medium</option>
+					</select>
+				</body>
+				</html>
+			`;
+			const { pageId: testPageId } = await manager.newPage(
+				manager.listBrowsers()[0].id,
+				`data:text/html,${encodeURIComponent(selectHtml)}`,
+			);
+
+			const state = await scanner.scanAllPages();
+
+			// Find the page section for this test page
+			const pageSection = state.split("=== PAGE:").find((s) => s.includes("Select with placeholder"));
+			expect(pageSection).toBeDefined();
+
+			// The SELECT OPTIONS should only show Small, Medium (not the placeholder options)
+			// The Options line should NOT contain "Select size" or "Choose one"
+			const optionsLine = pageSection!.split("\n").find((l) => l.includes("Options:"));
+			expect(optionsLine).toBeDefined();
+			expect(optionsLine).not.toContain("Select size");
+			expect(optionsLine).not.toContain("Choose one");
+			expect(optionsLine).toContain("Small");
+			expect(optionsLine).toContain("Medium");
+
+			// Clean up
+			await manager.closePage(testPageId);
+		});
+
+		it("should not show SELECT OPTIONS when no select elements exist", async () => {
+			const noSelectHtml = `
+				<!DOCTYPE html>
+				<html>
+				<head><title>No Selects</title></head>
+				<body>
+					<p>No select elements here</p>
+				</body>
+				</html>
+			`;
+			const { pageId: testPageId } = await manager.newPage(
+				manager.listBrowsers()[0].id,
+				`data:text/html,${encodeURIComponent(noSelectHtml)}`,
+			);
+
+			const state = await scanner.scanAllPages();
+
+			// Find the page section for this test page
+			const pageSection = state.split("=== PAGE:").find((s) => s.includes("No Selects"));
+			expect(pageSection).toBeDefined();
+
+			// This specific page should NOT have SELECT OPTIONS
+			expect(pageSection).not.toContain("SELECT OPTIONS");
+
+			// Clean up
+			await manager.closePage(testPageId);
+		});
+	});
 });

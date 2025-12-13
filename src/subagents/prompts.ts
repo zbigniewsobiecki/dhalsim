@@ -36,7 +36,6 @@ Use DismissOverlays FIRST when you encounter cookie banners or blocking overlays
 - DismissOverlays: Auto-dismiss cookie banners
 - Scroll: Scroll the page
 - WaitForElement: Wait for an element to appear
-- WaitForNavigation: Wait for page load (use after Click on traditional pages)
 - Wait: General wait
 
 ## Task Completion

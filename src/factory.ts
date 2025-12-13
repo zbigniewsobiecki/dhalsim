@@ -27,7 +27,7 @@ import { ExecuteScript } from "./gadgets/script";
 // User input gadgets
 import { RequestUserAssistance } from "./gadgets/user-input";
 // Wait gadgets
-import { Wait, WaitForElement, WaitForNavigation } from "./gadgets/wait";
+import { Wait, WaitForElement } from "./gadgets/wait";
 
 /**
  * Configuration for creating webasto gadgets.
@@ -74,7 +74,6 @@ export interface WebastoGadgets {
 	// Wait
 	Wait: Wait;
 	WaitForElement: WaitForElement;
-	WaitForNavigation: WaitForNavigation;
 }
 
 /**
@@ -132,7 +131,6 @@ export function createWebastoGadgets(config?: WebastoConfig): WebastoGadgets {
 		// Wait
 		Wait: new Wait(manager),
 		WaitForElement: new WaitForElement(manager),
-		WaitForNavigation: new WaitForNavigation(manager),
 	};
 }
 

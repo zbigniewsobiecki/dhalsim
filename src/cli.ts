@@ -35,7 +35,6 @@ import {
 	DismissOverlays,
 	ExecuteScript,
 	WaitForElement,
-	WaitForNavigation,
 	Wait,
 	RequestUserAssistance,
 } from "./gadgets";
@@ -140,13 +139,13 @@ It handles common patterns automatically. Only try manual clicking if DismissOve
 - Interaction: Click, Fill, Type, Select, Check, Hover, Scroll, DismissOverlays
 - Content: GetFullPageContent (batch read with selectors array), Screenshot
 - Pages: NewPage (only for new tabs), ClosePage, ListPages
-- Waiting: WaitForElement (wait for element to appear), WaitForNavigation (wait for page load), Wait
+- Waiting: WaitForElement (wait for element to appear), Wait
 - User input: RequestUserAssistance (captchas, 2FA)
 
 ## Click Behavior
 Click uses Playwright's auto-waiting - it waits for elements to be actionable before clicking.
-For SPAs: Just Click, then the next action will auto-wait for new elements.
-For traditional pages: Use Click followed by WaitForNavigation if you need to wait for page load.
+Click also auto-scrolls elements into view if they're outside the viewport.
+Just Click, then the next action will auto-wait for new elements.
 
 ## Patterns
 - Start: Navigate to URL on p1 (already open)
@@ -211,7 +210,6 @@ async function main() {
 				new DismissOverlays(manager),
 				new ExecuteScript(manager),
 				new WaitForElement(manager),
-				new WaitForNavigation(manager),
 				new Wait(manager),
 				new RequestUserAssistance(manager),
 			];

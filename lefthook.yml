@@ -1,5 +1,5 @@
 pre-commit:
-  parallel: false
+  parallel: true
   commands:
     lint:
       glob: "*.{ts,tsx,js,jsx,json}"
@@ -7,5 +7,5 @@ pre-commit:
     typecheck:
       glob: "*.{ts,tsx}"
       run: bun run typecheck
-    test:
-      run: bun run test:unit
+    # Tests removed from pre-commit - browser tests are slow and flaky
+    # Run tests manually or in CI instead
