@@ -320,7 +320,7 @@ export class PageStateScanner {
 	): Promise<ElementInfo | null> {
 		if (!el) return null;
 
-		const [id, name, className, dataTestId, ariaLabel, placeholder, inputType, href, textContent] = await Promise.all([
+		const [id, name, className, dataTestId, ariaLabel, placeholder, inputType, href, textContent, tagName] = await Promise.all([
 			el.getAttribute("id"),
 			el.getAttribute("name"),
 			el.getAttribute("class"),
@@ -330,6 +330,7 @@ export class PageStateScanner {
 			type === "input" ? el.getAttribute("type") : null,
 			type === "link" ? el.getAttribute("href") : null,
 			el.textContent(),
+			el.evaluate((e) => e.tagName.toLowerCase()),
 		]);
 
 		// Generate selector (priority order)
@@ -351,10 +352,10 @@ export class PageStateScanner {
 			if (classes.length > 0) {
 				selector = `.${this.escapeCSSSelector(classes[0])}`;
 			} else {
-				selector = type === "link" ? "a" : type;
+				selector = this.getFallbackSelector(type, tagName);
 			}
 		} else {
-			selector = type === "link" ? "a" : type;
+			selector = this.getFallbackSelector(type, tagName);
 		}
 
 		// Get display text
@@ -399,14 +400,10 @@ export class PageStateScanner {
 
 			let displaySelector = el.selector;
 
-			// If selector has duplicates, provide indexed version
+			// If selector has duplicates, provide indexed version using Playwright's >> nth= syntax
+			// This is more reliable than CSS :nth-of-type() which counts by tag type, not class
 			if (count > 1) {
-				// Use :nth-of-type for class selectors, or >> nth= for complex selectors
-				if (el.selector.startsWith(".") && !el.selector.includes(" ")) {
-					displaySelector = `${el.selector}:nth-of-type(${idx + 1})`;
-				} else {
-					displaySelector = `${el.selector} >> nth=${idx}`;
-				}
+				displaySelector = `${el.selector} >> nth=${idx}`;
 			}
 
 			const textStr = el.text ? ` "${el.text.slice(0, 60)}${el.text.length > 60 ? "..." : ""}"` : "";
@@ -532,5 +529,38 @@ export class PageStateScanner {
 	 */
 	private escapeCSSSelector(str: string): string {
 		return str.replace(/([!"#$%&'()*+,./:;<=>?@[\\\]^`{|}~])/g, "\\$1");
+	}
+
+	/**
+	 * Get a valid CSS selector for element type when no better selector is available.
+	 * Maps our internal type names to actual valid CSS selectors.
+	 */
+	private getFallbackSelector(type: ElementInfo["type"], tagName: string): string {
+		switch (type) {
+			case "link":
+				return "a";
+			case "checkbox":
+				// Handle different checkbox implementations
+				if (tagName === "input") {
+					return "input[type='checkbox']";
+				}
+				if (tagName === "label") {
+					return "label";
+				}
+				return "[role='checkbox']";
+			case "menuitem":
+				return "[role='menuitem']";
+			case "button":
+				return tagName === "button" ? "button" : "[role='button']";
+			case "input":
+				return "input";
+			case "select":
+				return "select";
+			case "textarea":
+				return "textarea";
+			default:
+				// Use actual tag name as last resort
+				return tagName || "*";
+		}
 	}
 }
