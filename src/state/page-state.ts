@@ -240,7 +240,17 @@ export class PageStateScanner {
 						const fieldName = field.getAttribute("name") ? `[name="${field.getAttribute("name")}"]` : "";
 						const type =
 							field.getAttribute("type") && tag === "input" ? `[type="${field.getAttribute("type")}"]` : "";
-						result.push(`${indent(1)}<${tag}${fieldId}${fieldName}${type}>`);
+
+						// Check visibility using DOM properties
+						const htmlField = field as HTMLElement;
+						const isHidden =
+							htmlField.offsetWidth === 0 ||
+							htmlField.offsetHeight === 0 ||
+							getComputedStyle(htmlField).visibility === "hidden" ||
+							getComputedStyle(htmlField).display === "none";
+						const hiddenMarker = isHidden ? " [hidden]" : "";
+
+						result.push(`${indent(1)}<${tag}${fieldId}${fieldName}${type}>${hiddenMarker}`);
 					});
 
 					result.push(`${indent(0)}</form>`);
