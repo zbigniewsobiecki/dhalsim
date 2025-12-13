@@ -8,12 +8,15 @@ export interface FormatConfig {
 	includeStructure: boolean;
 	/** Include content summary */
 	includeSummary: boolean;
+	/** Max number of links to show (0 = no limit). Default: 50 */
+	maxLinks: number;
 }
 
 export const DEFAULT_CONFIG: FormatConfig = {
 	maxContentLength: 0, // No limit - show full content
 	includeStructure: true,
 	includeSummary: true,
+	maxLinks: 50, // Limit links to prevent context flooding
 };
 
 interface ElementInfo {
@@ -391,10 +394,18 @@ export class PageStateScanner {
 
 		if (state.links.length > 0) {
 			lines.push("");
+			const maxLinks = this.config.maxLinks;
+			const showAll = maxLinks === 0 || state.links.length <= maxLinks;
+			const linksToShow = showAll ? state.links : state.links.slice(0, maxLinks);
+			const hiddenCount = state.links.length - linksToShow.length;
+
 			lines.push(`LINKS (${state.links.length}):`);
-			for (const el of state.links) {
+			for (const el of linksToShow) {
 				const textStr = el.text ? ` "${el.text}"` : "";
 				lines.push(`  ${el.selector}${textStr}`);
+			}
+			if (hiddenCount > 0) {
+				lines.push(`  [${hiddenCount} more links hidden]`);
 			}
 		}
 

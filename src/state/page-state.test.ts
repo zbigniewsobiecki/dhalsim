@@ -268,6 +268,7 @@ describe("PageStateScanner", () => {
 				maxContentLength: 50,
 				includeStructure: true,
 				includeSummary: true,
+				maxLinks: 50,
 			};
 			const customScanner = new PageStateScanner(manager as unknown as BrowserSessionManager, config);
 			const state = await customScanner.scanAllPages();
@@ -281,6 +282,7 @@ describe("PageStateScanner", () => {
 				maxContentLength: 0,
 				includeStructure: false,
 				includeSummary: true,
+				maxLinks: 50,
 			};
 			const customScanner = new PageStateScanner(manager as unknown as BrowserSessionManager, config);
 			const state = await customScanner.scanAllPages();
@@ -293,6 +295,7 @@ describe("PageStateScanner", () => {
 				maxContentLength: 0,
 				includeStructure: true,
 				includeSummary: false,
+				maxLinks: 50,
 			};
 			const customScanner = new PageStateScanner(manager as unknown as BrowserSessionManager, config);
 			const state = await customScanner.scanAllPages();
@@ -304,6 +307,80 @@ describe("PageStateScanner", () => {
 			expect(DEFAULT_CONFIG.maxContentLength).toBe(0);
 			expect(DEFAULT_CONFIG.includeStructure).toBe(true);
 			expect(DEFAULT_CONFIG.includeSummary).toBe(true);
+			expect(DEFAULT_CONFIG.maxLinks).toBe(50);
+		});
+
+		it("should limit links when maxLinks is set", async () => {
+			// Create a page with many links
+			const manyLinksHtml = `
+				<!DOCTYPE html>
+				<html>
+				<head><title>Many Links</title></head>
+				<body>
+					${Array.from({ length: 100 }, (_, i) => `<a href="/link${i}">Link ${i}</a>`).join("\n")}
+				</body>
+				</html>
+			`;
+			const { pageId: testPageId } = await manager.newPage(
+				manager.listBrowsers()[0].id,
+				`data:text/html,${encodeURIComponent(manyLinksHtml)}`,
+			);
+
+			const config: FormatConfig = {
+				maxContentLength: 0,
+				includeStructure: true,
+				includeSummary: true,
+				maxLinks: 5,
+			};
+			const customScanner = new PageStateScanner(manager as unknown as BrowserSessionManager, config);
+			const state = await customScanner.scanAllPages();
+
+			// Should show total count
+			expect(state).toContain("LINKS (100):");
+			// Should show first 5 links
+			expect(state).toContain('a[href="/link0"]');
+			expect(state).toContain('a[href="/link4"]');
+			// Should NOT show link 5+
+			expect(state).not.toContain('a[href="/link5"]');
+			// Should show hidden message
+			expect(state).toContain("[95 more links hidden]");
+
+			// Clean up
+			await manager.closePage(testPageId);
+		});
+
+		it("should show all links when maxLinks is 0", async () => {
+			// Create a page with a few links
+			const fewLinksHtml = `
+				<!DOCTYPE html>
+				<html>
+				<head><title>Few Links</title></head>
+				<body>
+					${Array.from({ length: 10 }, (_, i) => `<a href="/test${i}">Test ${i}</a>`).join("\n")}
+				</body>
+				</html>
+			`;
+			const { pageId: testPageId } = await manager.newPage(
+				manager.listBrowsers()[0].id,
+				`data:text/html,${encodeURIComponent(fewLinksHtml)}`,
+			);
+
+			const config: FormatConfig = {
+				maxContentLength: 0,
+				includeStructure: true,
+				includeSummary: true,
+				maxLinks: 0, // No limit
+			};
+			const customScanner = new PageStateScanner(manager as unknown as BrowserSessionManager, config);
+			const state = await customScanner.scanAllPages();
+
+			// Should show all 10 links
+			expect(state).toContain("LINKS (10):");
+			expect(state).toContain('a[href="/test9"]');
+			expect(state).not.toContain("more links hidden");
+
+			// Clean up
+			await manager.closePage(testPageId);
 		});
 	});
 });
