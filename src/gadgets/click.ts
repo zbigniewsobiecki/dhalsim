@@ -67,8 +67,8 @@ export class Click extends Gadget({
 				// Clear the tracker so a third click would work
 				this.lastClickedSelector.delete(params.pageId);
 				return JSON.stringify({
-					warning: "Same element clicked twice in a row - skipping to prevent toggle",
-					hint: "Check <CurrentBrowserState> for MENUITEMS or other changes from the first click",
+					error: "DUPLICATE CLICK BLOCKED: You already clicked this element. Clicking again would toggle/close it.",
+					action: "Do NOT retry this click. Check <CurrentBrowserState> for MENUITEMS or changes from the first click.",
 					selector: params.selector,
 				});
 			}
