@@ -41,9 +41,8 @@
 		"lint": "biome lint .",
 		"format": "biome format --write .",
 		"check": "biome check --write .",
-		"test": "bun test",
-		"test:unit": "bun test --timeout 60000",
-		"precheck": "bun run lint && bun run typecheck && bun run test:unit",
+		"test": "vitest run --no-file-parallelism",
+		"precheck": "bun run lint && bun run typecheck && bun run test",
 		"prepare": "lefthook install",
 		"postinstall": "rm -rf node_modules/camoufox-js/node_modules/better-sqlite3 2>/dev/null || true"
 	},
@@ -71,6 +70,7 @@
 		"@types/node": "^20.12.7",
 		"bun-types": "^1.3.2",
 		"lefthook": "^1.6.0",
-		"typescript": "^5.4.5"
+		"typescript": "^5.4.5",
+		"vitest": "^4.0.15"
 	}
 }

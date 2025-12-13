@@ -38,7 +38,11 @@ export class TestBrowserSessionManager {
 	async startBrowser(options: StartBrowserOptions = {}): Promise<StartBrowserResult> {
 		const { headless = true, url } = options;
 
-		const browser = await chromium.launch({ headless });
+		const browser = await chromium.launch({
+			headless,
+			timeout: 30000, // 30s for browser launch
+		});
+
 		const context = await browser.newContext();
 		const page = await context.newPage();
 
@@ -49,7 +53,7 @@ export class TestBrowserSessionManager {
 		this.pages.set(pageId, { page, browserId });
 
 		if (url) {
-			await page.goto(url);
+			await page.goto(url, { timeout: 10000 });
 		}
 
 		return {
@@ -168,10 +172,33 @@ export class TestBrowserSessionManager {
 		return this.pages.get(pageId)?.browserId;
 	}
 
-	async closeAll(): Promise<void> {
-		for (const [, entry] of this.browsers) {
-			await entry.browser.close();
+	/**
+	 * Reset a page to clean state with HTML content or blank.
+	 */
+	async resetPage(pageId: string, html?: string): Promise<void> {
+		const page = this.requirePage(pageId);
+		if (html) {
+			await page.setContent(html);
+		} else {
+			await page.goto("about:blank");
 		}
+	}
+
+	async closeAll(): Promise<void> {
+		const closePromises = Array.from(this.browsers.entries()).map(async ([, entry]) => {
+			try {
+				// Race between close and timeout to avoid hanging
+				await Promise.race([
+					entry.browser.close(),
+					new Promise<void>((_, reject) =>
+						setTimeout(() => reject(new Error("Browser close timeout")), 5000)
+					),
+				]);
+			} catch {
+				// Force continue if close hangs - browser may already be dead
+			}
+		});
+		await Promise.all(closePromises);
 		this.browsers.clear();
 		this.pages.clear();
 	}

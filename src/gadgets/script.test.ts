@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { testGadget } from "llmist/testing";
 import { TestBrowserSessionManager } from "../session/test-manager";
 import { Navigate } from "./navigation";

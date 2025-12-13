@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { TestBrowserSessionManager } from "../session/test-manager";
 import { PageStateScanner, DEFAULT_CONFIG, type FormatConfig } from "./page-state";
 import type { BrowserSessionManager } from "../session";
@@ -62,6 +62,9 @@ describe("PageStateScanner", () => {
 	afterAll(async () => {
 		await manager.closeAll();
 	});
+
+	// Note: No beforeEach reset needed - tests are read-only and don't modify page state
+	// The beforeAll already sets up the page with the correct URL (data:text/html,...)
 
 	describe("initialization and caching", () => {
 		it("should return '[No browser open]' initially before any refresh", () => {

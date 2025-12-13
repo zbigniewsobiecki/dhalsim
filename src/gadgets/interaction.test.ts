@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { testGadget } from "llmist/testing";
 import { TestBrowserSessionManager } from "../session/test-manager";
 import {
@@ -53,6 +53,11 @@ describe("Interaction Gadgets", () => {
 
 	afterAll(async () => {
 		await manager.closeAll();
+	});
+
+	// Reset page state before each test for isolation
+	beforeEach(async () => {
+		await manager.resetPage(pageId, TEST_HTML);
 	});
 
 	describe("Click", () => {
