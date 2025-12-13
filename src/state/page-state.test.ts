@@ -343,7 +343,7 @@ describe("PageStateScanner", () => {
 			// Should NOT show link 5+
 			expect(state).not.toContain('a[href="/link5"]');
 			// Should show hidden message
-			expect(state).toContain("[95 more links hidden - use GetFullPageContent for complete data]");
+			expect(state).toContain("[95 more hidden - use GetFullPageContent for complete data]");
 
 			// Clean up
 			await manager.closePage(testPageId);

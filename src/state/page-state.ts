@@ -373,6 +373,56 @@ export class PageStateScanner {
 	}
 
 	/**
+	 * Format elements with unique indexed selectors when duplicates exist.
+	 * Returns array of formatted lines.
+	 */
+	private formatElements(elements: ElementInfo[], maxItems = 0): string[] {
+		if (elements.length === 0) return [];
+
+		// Count selector occurrences
+		const selectorCounts = new Map<string, number>();
+		for (const el of elements) {
+			selectorCounts.set(el.selector, (selectorCounts.get(el.selector) || 0) + 1);
+		}
+
+		// Track which index we're at for each selector
+		const selectorIndex = new Map<string, number>();
+
+		const lines: string[] = [];
+		const limit = maxItems > 0 ? Math.min(maxItems, elements.length) : elements.length;
+
+		for (let i = 0; i < limit; i++) {
+			const el = elements[i];
+			const count = selectorCounts.get(el.selector) || 1;
+			const idx = selectorIndex.get(el.selector) || 0;
+			selectorIndex.set(el.selector, idx + 1);
+
+			let displaySelector = el.selector;
+
+			// If selector has duplicates, provide indexed version
+			if (count > 1) {
+				// Use :nth-of-type for class selectors, or >> nth= for complex selectors
+				if (el.selector.startsWith(".") && !el.selector.includes(" ")) {
+					displaySelector = `${el.selector}:nth-of-type(${idx + 1})`;
+				} else {
+					displaySelector = `${el.selector} >> nth=${idx}`;
+				}
+			}
+
+			const textStr = el.text ? ` "${el.text.slice(0, 60)}${el.text.length > 60 ? "..." : ""}"` : "";
+			const typeStr = el.inputType ? ` [${el.inputType}]` : "";
+			lines.push(`  ${displaySelector}${typeStr}${textStr}`);
+		}
+
+		// Show hidden count
+		if (elements.length > limit) {
+			lines.push(`  [${elements.length - limit} more hidden - use GetFullPageContent for complete data]`);
+		}
+
+		return lines;
+	}
+
+	/**
 	 * Format page state as compact string.
 	 */
 	private formatPageState(state: PageState): string {
@@ -397,73 +447,43 @@ export class PageStateScanner {
 		if (state.inputs.length > 0) {
 			lines.push("");
 			lines.push("INPUTS:");
-			for (const el of state.inputs) {
-				const typeStr = el.inputType ? ` [${el.inputType}]` : "";
-				const textStr = el.text ? ` "${el.text}"` : "";
-				lines.push(`  ${el.selector}${typeStr}${textStr}`);
-			}
+			lines.push(...this.formatElements(state.inputs));
 		}
 
 		if (state.buttons.length > 0) {
 			lines.push("");
 			lines.push("BUTTONS:");
-			for (const el of state.buttons) {
-				const textStr = el.text ? ` "${el.text}"` : "";
-				lines.push(`  ${el.selector}${textStr}`);
-			}
+			lines.push(...this.formatElements(state.buttons));
 		}
 
 		if (state.links.length > 0) {
 			lines.push("");
-			const maxLinks = this.config.maxLinks;
-			const showAll = maxLinks === 0 || state.links.length <= maxLinks;
-			const linksToShow = showAll ? state.links : state.links.slice(0, maxLinks);
-			const hiddenCount = state.links.length - linksToShow.length;
-
 			lines.push(`LINKS (${state.links.length}):`);
-			for (const el of linksToShow) {
-				const textStr = el.text ? ` "${el.text}"` : "";
-				lines.push(`  ${el.selector}${textStr}`);
-			}
-			if (hiddenCount > 0) {
-				lines.push(`  [${hiddenCount} more links hidden - use GetFullPageContent for complete data]`);
-			}
+			lines.push(...this.formatElements(state.links, this.config.maxLinks));
 		}
 
 		if (state.selects.length > 0) {
 			lines.push("");
 			lines.push("SELECTS:");
-			for (const el of state.selects) {
-				const textStr = el.text ? ` "${el.text}"` : "";
-				lines.push(`  ${el.selector}${textStr}`);
-			}
+			lines.push(...this.formatElements(state.selects));
 		}
 
 		if (state.textareas.length > 0) {
 			lines.push("");
 			lines.push("TEXTAREAS:");
-			for (const el of state.textareas) {
-				const textStr = el.text ? ` "${el.text}"` : "";
-				lines.push(`  ${el.selector}${textStr}`);
-			}
+			lines.push(...this.formatElements(state.textareas));
 		}
 
 		if (state.menuitems.length > 0) {
 			lines.push("");
 			lines.push("MENUITEMS:");
-			for (const el of state.menuitems) {
-				const textStr = el.text ? ` "${el.text}"` : "";
-				lines.push(`  ${el.selector}${textStr}`);
-			}
+			lines.push(...this.formatElements(state.menuitems));
 		}
 
 		if (state.checkboxes.length > 0) {
 			lines.push("");
 			lines.push("CHECKBOXES:");
-			for (const el of state.checkboxes) {
-				const textStr = el.text ? ` "${el.text}"` : "";
-				lines.push(`  ${el.selector}${textStr}`);
-			}
+			lines.push(...this.formatElements(state.checkboxes));
 		}
 
 		// Show data-test attributes for ExecuteScript use
