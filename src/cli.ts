@@ -125,9 +125,7 @@ This is your source of truth for what's on screen. It contains:
 ## CRITICAL Rules
 1. Use pageId "p1" which is ALREADY OPEN. Do NOT use NewPage unless you need multiple tabs.
 2. ONLY use selectors exactly as shown in <CurrentBrowserState>
-3. NEVER guess selectors - if it's not listed, use GetPageContent to find it
-4. NEVER use Playwright-specific selectors like :has-text(), :nth-match(), text="..." - only standard CSS
-5. NEVER construct indexed selectors like :nth-of-type(), :nth-child(), :first-child - use exact selectors from state
+3. NEVER guess or construct selectors - if it's not listed, use GetPageContent to find text content
 
 ## Cookie Banners & Overlays
 Use DismissOverlays FIRST when you encounter cookie consent popups or blocking overlays.
