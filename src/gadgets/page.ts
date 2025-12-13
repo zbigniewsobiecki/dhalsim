@@ -1,5 +1,5 @@
 import { Gadget, z } from "llmist";
-import type { BrowserSessionManager } from "../session";
+import type { IBrowserSessionManager } from "../session";
 
 export class NewPage extends Gadget({
 	description:
@@ -22,7 +22,7 @@ export class NewPage extends Gadget({
 		},
 	],
 }) {
-	constructor(private manager: BrowserSessionManager) {
+	constructor(private manager: IBrowserSessionManager) {
 		super();
 	}
 
@@ -50,7 +50,7 @@ export class ClosePage extends Gadget({
 		},
 	],
 }) {
-	constructor(private manager: BrowserSessionManager) {
+	constructor(private manager: IBrowserSessionManager) {
 		super();
 	}
 
@@ -84,7 +84,7 @@ export class ListPages extends Gadget({
 		},
 	],
 }) {
-	constructor(private manager: BrowserSessionManager) {
+	constructor(private manager: IBrowserSessionManager) {
 		super();
 	}
 

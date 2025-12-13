@@ -1,32 +1,33 @@
 import { Gadget, z } from "llmist";
-import type { BrowserSessionManager } from "../session";
+import type { IBrowserSessionManager } from "../session";
 
 export class Navigate extends Gadget({
-	description: "Navigate a page to a specific URL. Use ListPages to see available page IDs.",
+	description: "Navigate a page to a specific URL.",
 	schema: z.object({
 		pageId: z.string().describe("Page ID to navigate (e.g., 'p1')"),
 		url: z.string().url().describe("URL to navigate to"),
-		waitUntil: z
-			.enum(["load", "domcontentloaded", "networkidle"])
-			.default("networkidle")
-			.describe("When to consider navigation finished (default: networkidle)"),
 	}),
 	examples: [
 		{
-			params: { pageId: "p1", url: "https://example.com", waitUntil: "networkidle" },
+			params: { pageId: "p1", url: "https://example.com" },
 			output: '{"url":"https://example.com/","title":"Example Domain"}',
 			comment: "Navigate to example.com",
 		},
+		{
+			params: { pageId: "p1", url: "https://github.com/login" },
+			output: '{"url":"https://github.com/login","title":"Sign in to GitHub"}',
+			comment: "Navigate to login page",
+		},
 	],
 }) {
-	constructor(private manager: BrowserSessionManager) {
+	constructor(private manager: IBrowserSessionManager) {
 		super();
 	}
 
 	async execute(params: this["params"]): Promise<string> {
 		try {
 			const page = this.manager.requirePage(params.pageId);
-			await page.goto(params.url, { waitUntil: params.waitUntil });
+			await page.goto(params.url); // Uses Playwright default 'load'
 			return JSON.stringify({
 				url: page.url(),
 				title: await page.title(),
@@ -51,7 +52,7 @@ export class GoBack extends Gadget({
 		},
 	],
 }) {
-	constructor(private manager: BrowserSessionManager) {
+	constructor(private manager: IBrowserSessionManager) {
 		super();
 	}
 
@@ -83,7 +84,7 @@ export class GoForward extends Gadget({
 		},
 	],
 }) {
-	constructor(private manager: BrowserSessionManager) {
+	constructor(private manager: IBrowserSessionManager) {
 		super();
 	}
 
@@ -106,27 +107,23 @@ export class Reload extends Gadget({
 	description: "Reload the current page.",
 	schema: z.object({
 		pageId: z.string().describe("Page ID"),
-		waitUntil: z
-			.enum(["load", "domcontentloaded", "networkidle"])
-			.default("networkidle")
-			.describe("When to consider reload finished (default: networkidle)"),
 	}),
 	examples: [
 		{
-			params: { pageId: "p1", waitUntil: "networkidle" },
+			params: { pageId: "p1" },
 			output: '{"success":true,"url":"https://example.com/","title":"Example Domain"}',
 			comment: "Reload the page",
 		},
 	],
 }) {
-	constructor(private manager: BrowserSessionManager) {
+	constructor(private manager: IBrowserSessionManager) {
 		super();
 	}
 
 	async execute(params: this["params"]): Promise<string> {
 		try {
 			const page = this.manager.requirePage(params.pageId);
-			await page.reload({ waitUntil: params.waitUntil });
+			await page.reload(); // Uses Playwright default 'load'
 			return JSON.stringify({
 				success: true,
 				url: page.url(),

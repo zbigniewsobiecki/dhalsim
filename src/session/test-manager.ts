@@ -1,45 +1,27 @@
-import { Camoufox, type LaunchOptions as CamoufoxOptions } from "camoufox-js";
-import type { Page } from "playwright-core";
-import type { BrowserEntry, BrowserInfo, PageEntry, PageInfo } from "./types";
+/**
+ * Test-only browser session manager using vanilla playwright-core.
+ * This bypasses camoufox-js to avoid better-sqlite3 compatibility issues with Bun.
+ */
+import { chromium, type Page, type Browser, type BrowserContext } from "playwright-core";
+import type { BrowserInfo, PageInfo } from "./types";
+import type { StartBrowserOptions, StartBrowserResult, NewPageResult, CloseBrowserResult, ClosePageResult } from "./manager";
 
-export interface ProxyOptions {
-	server: string;
-	username?: string;
-	password?: string;
+interface BrowserEntry {
+	browser: Browser;
+	context: BrowserContext;
+	headless: boolean;
 }
 
-export interface StartBrowserOptions {
-	headless?: boolean;
-	url?: string;
-	/** Proxy server configuration */
-	proxy?: ProxyOptions;
-	/** Auto-detect timezone/locale from proxy IP */
-	geoip?: boolean;
-}
-
-export interface StartBrowserResult {
+interface PageEntry {
+	page: Page;
 	browserId: string;
-	pageId: string;
-	url: string;
 }
 
-export interface NewPageResult {
-	pageId: string;
-	browserId: string;
-	url: string;
-	title: string;
-}
-
-export interface CloseBrowserResult {
-	success: true;
-	closedPages: string[];
-}
-
-export interface ClosePageResult {
-	success: true;
-}
-
-export class BrowserSessionManager {
+/**
+ * Browser session manager for tests using vanilla playwright-core (chromium).
+ * API-compatible with BrowserSessionManager.
+ */
+export class TestBrowserSessionManager {
 	private browsers = new Map<string, BrowserEntry>();
 	private pages = new Map<string, PageEntry>();
 	private browserCounter = 0;
@@ -54,28 +36,11 @@ export class BrowserSessionManager {
 	}
 
 	async startBrowser(options: StartBrowserOptions = {}): Promise<StartBrowserResult> {
-		const { headless = true, url, proxy, geoip = false } = options;
+		const { headless = true, url } = options;
 
-		const camoufoxOptions: CamoufoxOptions = {
-			headless,
-			humanize: true, // Human-like cursor movement
-			block_webrtc: true, // Prevent WebRTC IP leaks
-			geoip: geoip || !!proxy, // Auto-detect geo from IP if proxy set
-			proxy: proxy
-				? {
-						server: proxy.server,
-						username: proxy.username,
-						password: proxy.password,
-					}
-				: undefined,
-		};
-
-		// Launch Camoufox (anti-detect Firefox)
-		const browser = await Camoufox(camoufoxOptions);
-		// Get the default context (Camoufox creates one automatically)
-		const contexts = browser.contexts();
-		const context = contexts[0] || (await browser.newContext());
-		const page = context.pages()[0] || (await context.newPage());
+		const browser = await chromium.launch({ headless });
+		const context = await browser.newContext();
+		const page = await context.newPage();
 
 		const browserId = this.nextBrowserId();
 		const pageId = this.nextPageId();
@@ -100,7 +65,6 @@ export class BrowserSessionManager {
 			throw new Error(`Browser ${browserId} not found`);
 		}
 
-		// Find and remove all pages for this browser
 		const closedPages: string[] = [];
 		for (const [pageId, pageEntry] of this.pages) {
 			if (pageEntry.browserId === browserId) {
@@ -181,7 +145,7 @@ export class BrowserSessionManager {
 				id,
 				browserId: entry.browserId,
 				url: entry.page.url(),
-				title: "", // Title requires async, we'll handle this in gadgets
+				title: "",
 			});
 		}
 
@@ -211,18 +175,4 @@ export class BrowserSessionManager {
 		this.browsers.clear();
 		this.pages.clear();
 	}
-}
-
-// Singleton instance
-let instance: BrowserSessionManager | null = null;
-
-export function getSessionManager(): BrowserSessionManager {
-	if (!instance) {
-		instance = new BrowserSessionManager();
-	}
-	return instance;
-}
-
-export function resetSessionManager(): void {
-	instance = null;
 }

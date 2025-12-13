@@ -1,7 +1,7 @@
 {
 	"name": "webasto",
 	"version": "0.1.0",
-	"description": "Browser automation CLI powered by llmist with Playwright gadgets",
+	"description": "Browser automation CLI powered by llmist with Camoufox anti-detect browser",
 	"type": "module",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -9,9 +9,10 @@
 		"webasto": "dist/cli.js"
 	},
 	"scripts": {
-		"build": "bun build src/cli.ts --outdir dist --target node && bun run build:types",
+		"build": "bun build src/cli.ts --outdir dist --target node --external playwright-core --external camoufox-js --external chromium-bidi --external electron && bun run build:types",
 		"build:types": "tsc --emitDeclarationOnly",
 		"dev": "bun run src/cli.ts",
+		"dev:node": "bun run build && node dist/cli.js",
 		"typecheck": "tsc --noEmit",
 		"lint": "biome lint .",
 		"format": "biome format --write .",
@@ -19,7 +20,8 @@
 		"test": "bun test",
 		"test:unit": "bun test --timeout 60000",
 		"precheck": "bun run lint && bun run typecheck && bun run test:unit",
-		"prepare": "lefthook install"
+		"prepare": "lefthook install",
+		"postinstall": "rm -rf node_modules/camoufox-js/node_modules/better-sqlite3 2>/dev/null || true"
 	},
 	"keywords": [
 		"browser",
@@ -33,11 +35,11 @@
 	"author": "Zbigniew Sobiecki",
 	"license": "MIT",
 	"dependencies": {
+		"better-sqlite3": "nounder/bun-better-sqlite3",
 		"camoufox-js": "^0.8.4",
 		"chalk": "^5.6.2",
 		"commander": "^12.1.0",
 		"llmist": "file:../llmist",
-		"playwright": "^1.49.1",
 		"sharp": "^0.34.5"
 	},
 	"devDependencies": {

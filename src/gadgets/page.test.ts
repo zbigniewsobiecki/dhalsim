@@ -1,20 +1,16 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { testGadget } from "llmist/testing";
-import { BrowserSessionManager } from "../session";
-import { StartBrowser } from "./browser";
+import { TestBrowserSessionManager } from "../session/test-manager";
 import { ClosePage, ListPages, NewPage } from "./page";
 
 describe("Page Gadgets", () => {
-	let manager: BrowserSessionManager;
+	let manager: TestBrowserSessionManager;
 	let browserId: string;
 
 	beforeAll(async () => {
-		manager = new BrowserSessionManager();
-		// Start a browser for testing
-		const startGadget = new StartBrowser(manager);
-		const result = await testGadget(startGadget, {});
-		const parsed = JSON.parse(result.result!);
-		browserId = parsed.browserId;
+		manager = new TestBrowserSessionManager();
+		const result = await manager.startBrowser({ headless: true });
+		browserId = result.browserId;
 	});
 
 	afterAll(async () => {

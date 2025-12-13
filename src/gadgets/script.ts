@@ -1,5 +1,5 @@
 import { Gadget, z } from "llmist";
-import type { BrowserSessionManager } from "../session";
+import type { IBrowserSessionManager } from "../session";
 
 export class ExecuteScript extends Gadget({
 	description:
@@ -33,7 +33,7 @@ export class ExecuteScript extends Gadget({
 		},
 	],
 }) {
-	constructor(private manager: BrowserSessionManager) {
+	constructor(private manager: IBrowserSessionManager) {
 		super();
 	}
 

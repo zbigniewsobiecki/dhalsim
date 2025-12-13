@@ -1,14 +1,14 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import { BrowserSessionManager } from "./manager";
+import { TestBrowserSessionManager } from "./test-manager";
 
 describe("BrowserSessionManager", () => {
 	// Use a single shared manager for faster tests
-	let manager: BrowserSessionManager;
+	let manager: TestBrowserSessionManager;
 	let sharedBrowserId: string;
 	let sharedPageId: string;
 
 	beforeAll(async () => {
-		manager = new BrowserSessionManager();
+		manager = new TestBrowserSessionManager();
 		// Start one shared browser for most tests
 		const result = await manager.startBrowser({ headless: true });
 		sharedBrowserId = result.browserId;
@@ -104,7 +104,7 @@ describe("BrowserSessionManager", () => {
 // Separate test suite for operations that need isolated browsers
 describe("BrowserSessionManager - isolated operations", () => {
 	it("should start browser with initial URL", async () => {
-		const manager = new BrowserSessionManager();
+		const manager = new TestBrowserSessionManager();
 		try {
 			const result = await manager.startBrowser({
 				headless: true,
@@ -118,7 +118,7 @@ describe("BrowserSessionManager - isolated operations", () => {
 	});
 
 	it("should track multiple browsers and close them with their pages", async () => {
-		const manager = new BrowserSessionManager();
+		const manager = new TestBrowserSessionManager();
 		try {
 			const b1 = await manager.startBrowser({ headless: true });
 			const b2 = await manager.startBrowser({ headless: true });
@@ -142,7 +142,7 @@ describe("BrowserSessionManager - isolated operations", () => {
 	});
 
 	it("should close all browsers", async () => {
-		const manager = new BrowserSessionManager();
+		const manager = new TestBrowserSessionManager();
 		try {
 			await manager.startBrowser({ headless: true });
 			await manager.startBrowser({ headless: true });

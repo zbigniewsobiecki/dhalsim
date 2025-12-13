@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 import chalk from "chalk";
 import { Command } from "commander";
+import * as readline from "node:readline";
 import { LLMist, AgentBuilder } from "llmist";
 import { BrowserSessionManager } from "./session";
+import { PageStateScanner } from "./state";
 import {
 	resolveLogDir,
 	createSessionDir,
@@ -11,9 +13,6 @@ import {
 	formatCallNumber,
 } from "./logging";
 import {
-	StartBrowser,
-	CloseBrowser,
-	ListBrowsers,
 	NewPage,
 	ClosePage,
 	ListPages,
@@ -23,10 +22,12 @@ import {
 	Reload,
 	GetPageContent,
 	Screenshot,
-	ListInteractiveElements,
 	Click,
+	ClickAndNavigate,
 	Type,
 	Fill,
+	FillForm,
+	FillPinCode,
 	PressKey,
 	Select,
 	Check,
@@ -37,6 +38,7 @@ import {
 	WaitForElement,
 	WaitForNavigation,
 	Wait,
+	RequestUserAssistance,
 } from "./gadgets";
 
 interface CLIOptions {
@@ -47,29 +49,45 @@ interface CLIOptions {
 	logLlmRequests?: boolean;
 }
 
-const SYSTEM_PROMPT = `You are a browser automation assistant. You control a web browser to accomplish tasks for the user.
+const SYSTEM_PROMPT = `You are a browser automation assistant controlling a web browser.
 
-You have access to gadgets for:
-- Browser management: StartBrowser, CloseBrowser, ListBrowsers
-- Page management: NewPage, ClosePage, ListPages
-- Navigation: Navigate, GoBack, GoForward, Reload
-- Content extraction: GetPageContent, Screenshot, ListInteractiveElements
-- Interaction: Click, Type, Fill, PressKey, Select, Check, Hover, Scroll, DismissOverlays
-- JavaScript execution: ExecuteScript
+## Browser State (<CurrentBrowserState>)
+After each message, you receive a <CurrentBrowserState> block showing the LIVE state of the browser RIGHT NOW.
+This is your source of truth for what's on screen. It contains:
+- OPEN PAGES: List of available pageIds (e.g., "p1" or "p1, p2") - use these for gadget calls
+- URL and title of each page
+- INPUTS: Form fields with their CSS selectors
+- BUTTONS: Clickable buttons with their CSS selectors
+- LINKS: Navigation links with their CSS selectors
+- MENUITEMS: Dropdown/menu options (only visible when a dropdown is open)
+
+## CRITICAL Rules
+1. Use pageId "p1" which is ALREADY OPEN. Do NOT use NewPage unless you need multiple tabs.
+2. ONLY use selectors exactly as shown in <CurrentBrowserState>
+3. NEVER guess selectors - if it's not listed, use GetPageContent to find it
+4. NEVER use Playwright-specific selectors like :has-text(), :nth-match(), text="..." - only standard CSS
+5. NEVER construct indexed selectors like :nth-of-type(), :nth-child(), :first-child - use exact selectors from state
+
+## Cookie Banners & Overlays
+Use DismissOverlays FIRST when you encounter cookie consent popups or blocking overlays.
+It handles common patterns automatically. Only try manual clicking if DismissOverlays fails.
+
+## Gadgets
+- Navigation: Navigate (go to URL), ClickAndNavigate (click + wait), GoBack, GoForward
+- Forms: FillForm (multiple fields + submit), FillPinCode (2FA codes)
+- Interaction: Click, Fill, Type, Select, Check, Hover, Scroll, DismissOverlays
+- Content: GetPageContent (batch read with selectors array), Screenshot
+- Pages: NewPage (only for new tabs), ClosePage, ListPages
 - Waiting: WaitForElement, WaitForNavigation, Wait
+- User input: RequestUserAssistance (captchas, 2FA)
 
-Workflow:
-1. Start with StartBrowser. If you provide a URL, the browser opens directly to that page - don't call Navigate afterward (it's redundant)
-2. If you encounter cookie banners or popups blocking interaction, use DismissOverlays
-3. Look for category links, filter buttons, or navigation menus before using search - they're often more reliable
-4. Use ListInteractiveElements to find elements you can interact with
-5. Use GetPageContent to read page text
-6. Use Screenshot for visual inspection when needed
-7. Use Click, Fill, Type for interactions
-8. If Click fails with "element intercepted by another element", try using force: true to bypass the actionability check
-9. Prefer WaitForElement or WaitForNavigation over fixed Wait times
+## Patterns
+- Start: Navigate to URL on p1 (already open)
+- Cookie banner: DismissOverlays → then continue
+- Login: FillForm with selectors FROM <CurrentBrowserState>
+- Dropdown: Click to open → check MENUITEMS in next state → Click option
+- Read data: GetPageContent with selectors array`;
 
-Be methodical and verify your actions succeeded before proceeding.`;
 
 async function main() {
 	const program = new Command();
@@ -91,12 +109,17 @@ async function main() {
 				process.exit(1);
 			}
 			const manager = new BrowserSessionManager();
+			const pageStateScanner = new PageStateScanner(manager);
+
+			// Auto-start browser for this session
+			console.error(chalk.dim("Starting browser..."));
+			const { pageId } = await manager.startBrowser({
+				headless: options.headless,
+			});
+			console.error(chalk.dim(`Browser ready (page: ${pageId})`));
 
 			// Create all gadget instances with the shared manager
 			const gadgets = [
-				new StartBrowser(manager),
-				new CloseBrowser(manager),
-				new ListBrowsers(manager),
 				new NewPage(manager),
 				new ClosePage(manager),
 				new ListPages(manager),
@@ -106,10 +129,12 @@ async function main() {
 				new Reload(manager),
 				new GetPageContent(manager),
 				new Screenshot(manager),
-				new ListInteractiveElements(manager),
 				new Click(manager),
+				new ClickAndNavigate(manager),
 				new Type(manager),
 				new Fill(manager),
+				new FillForm(manager),
+				new FillPinCode(manager),
 				new PressKey(manager),
 				new Select(manager),
 				new Check(manager),
@@ -120,6 +145,7 @@ async function main() {
 				new WaitForElement(manager),
 				new WaitForNavigation(manager),
 				new Wait(manager),
+				new RequestUserAssistance(manager),
 			];
 
 			// Set up graceful cleanup
@@ -145,15 +171,38 @@ async function main() {
 				console.error(chalk.dim(`Logging LLM requests to: ${logDir}`));
 			}
 
+			// Human input handler for interactive prompts (captchas, 2FA codes, etc.)
+			const humanInputHandler = (question: string): Promise<string> => {
+				return new Promise((resolve) => {
+					const rl = readline.createInterface({
+						input: process.stdin,
+						output: process.stderr,
+					});
+					console.error(chalk.yellow(`\n${question}`));
+					rl.question(chalk.cyan("➤ "), (answer) => {
+						rl.close();
+						resolve(answer.trim());
+					});
+				});
+			};
+
 			const client = new LLMist();
 			const builder = new AgentBuilder(client)
 				.withModel(options.model)
 				.withSystem(SYSTEM_PROMPT)
 				.withMaxIterations(Number.parseInt(String(options.maxIterations), 10))
 				.withGadgets(...gadgets)
+				.onHumanInput(humanInputHandler)
+				.withTrailingMessage(() => {
+					// Return cached page state (sync)
+					return pageStateScanner.getCachedState();
+				})
 				.withHooks({
 					observers: {
 						onLLMCallReady: async (ctx) => {
+							// Refresh page state before each LLM call
+							await pageStateScanner.refreshState();
+
 							if (logDir) {
 								callCounter++;
 								if (!sessionDir) {

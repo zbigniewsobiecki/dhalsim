@@ -1,5 +1,5 @@
 import { Gadget, z } from "llmist";
-import type { BrowserSessionManager } from "../session";
+import type { IBrowserSessionManager } from "../session";
 
 export class WaitForElement extends Gadget({
 	description:
@@ -26,7 +26,7 @@ export class WaitForElement extends Gadget({
 		},
 	],
 }) {
-	constructor(private manager: BrowserSessionManager) {
+	constructor(private manager: IBrowserSessionManager) {
 		super();
 	}
 
@@ -66,25 +66,21 @@ export class WaitForNavigation extends Gadget({
 		pageId: z.string().describe("Page ID"),
 		url: z.string().optional().describe("URL pattern to wait for (glob or regex)"),
 		timeout: z.number().default(30000).describe("Timeout in milliseconds"),
-		waitUntil: z
-			.enum(["load", "domcontentloaded", "networkidle"])
-			.default("load")
-			.describe("When to consider navigation complete"),
 	}),
 	examples: [
 		{
-			params: { pageId: "p1", timeout: 30000, waitUntil: "load" },
+			params: { pageId: "p1", timeout: 30000 },
 			output: '{"url":"https://example.com/new-page","title":"New Page"}',
 			comment: "Wait for navigation to complete",
 		},
 		{
-			params: { pageId: "p1", url: "**/success**", timeout: 30000, waitUntil: "load" },
+			params: { pageId: "p1", url: "**/success**", timeout: 30000 },
 			output: '{"url":"https://example.com/success","title":"Success"}',
 			comment: "Wait for specific URL pattern",
 		},
 	],
 }) {
-	constructor(private manager: BrowserSessionManager) {
+	constructor(private manager: IBrowserSessionManager) {
 		super();
 	}
 
@@ -94,8 +90,7 @@ export class WaitForNavigation extends Gadget({
 
 			await page.waitForURL(params.url || "**", {
 				timeout: params.timeout,
-				waitUntil: params.waitUntil,
-			});
+			}); // Uses Playwright default 'load'
 
 			return JSON.stringify({
 				url: page.url(),
@@ -123,7 +118,7 @@ export class Wait extends Gadget({
 	],
 }) {
 	// No manager needed for simple wait
-	constructor(_manager: BrowserSessionManager) {
+	constructor(_manager: IBrowserSessionManager) {
 		super();
 	}
 

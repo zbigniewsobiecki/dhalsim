@@ -1,5 +1,6 @@
 import { Gadget, z } from "llmist";
-import type { BrowserSessionManager } from "../session";
+import type { Page } from "playwright-core";
+import type { IBrowserSessionManager } from "../session";
 import { humanDelay, randomDelay } from "../stealth";
 
 // Language-agnostic CMP accept button selectors (from CHI 2025 research paper)
@@ -94,6 +95,143 @@ const CMP_ACCEPT_SELECTORS = [
 	'button[aria-label="Dismiss"]',
 ];
 
+/**
+ * Utility function to dismiss cookie banners and overlays on a page.
+ * Exported for use by StartBrowser's autoDismissOverlays option.
+ */
+export async function dismissOverlaysOnPage(page: Page): Promise<number> {
+	let dismissed = 0;
+
+	// Step 1: Try CMP-specific selectors (most reliable, language-agnostic)
+	for (const selector of CMP_ACCEPT_SELECTORS) {
+		try {
+			const btn = await page.$(selector);
+			if (btn && (await btn.isVisible())) {
+				await btn.click({ force: true });
+				dismissed++;
+				await page.waitForTimeout(300);
+				break; // Stop after first successful click
+			}
+		} catch {
+			// Selector not found or click failed, continue
+		}
+	}
+
+	// Step 2: If no CMP selector worked, use heuristic to find primary button in overlay
+	if (dismissed === 0) {
+		const clickedButton = await page.evaluate(() => {
+			// Find overlay containers by z-index + fixed position + consent-related class/id
+			const consentPattern = /cookie|consent|gdpr|privacy|cmp|banner|notice/i;
+			const overlayContainers: HTMLElement[] = [];
+
+			document.querySelectorAll("*").forEach((el) => {
+				const htmlEl = el as HTMLElement;
+				const style = getComputedStyle(htmlEl);
+				const zIndex = Number.parseInt(style.zIndex, 10) || 0;
+				const isPositioned = style.position === "fixed" || style.position === "absolute";
+				const classId = `${htmlEl.className || ""} ${htmlEl.id || ""}`.toLowerCase();
+				const hasConsentPattern = consentPattern.test(classId);
+
+				if (isPositioned && zIndex > 10 && hasConsentPattern && htmlEl.offsetWidth > 0) {
+					overlayContainers.push(htmlEl);
+				}
+			});
+
+			// For each container, find the most prominent button (usually "accept")
+			for (const container of overlayContainers) {
+				const buttons = container.querySelectorAll('button, [role="button"], a.btn, a[class*="btn"]');
+				if (buttons.length === 0) continue;
+
+				// Score buttons by visual prominence
+				let bestButton: HTMLElement | null = null;
+				let bestScore = -1;
+
+				buttons.forEach((btn) => {
+					const htmlBtn = btn as HTMLElement;
+					if (!htmlBtn.offsetWidth) return; // Not visible
+
+					const style = getComputedStyle(htmlBtn);
+					const bgColor = style.backgroundColor;
+					let score = 0;
+
+					// Colored background = higher score (accept buttons are usually colored)
+					if (bgColor && bgColor !== "transparent" && bgColor !== "rgba(0, 0, 0, 0)") {
+						// Check if it's a saturated color (not gray)
+						const rgbMatch = bgColor.match(/\d+/g);
+						if (rgbMatch) {
+							const [r, g, b] = rgbMatch.map(Number);
+							const max = Math.max(r, g, b);
+							const min = Math.min(r, g, b);
+							const saturation = max === 0 ? 0 : (max - min) / max;
+							score += saturation * 5;
+							// Bright backgrounds score higher
+							if (max > 100) score += 2;
+						}
+					}
+
+					// Larger buttons score higher
+					const area = htmlBtn.offsetWidth * htmlBtn.offsetHeight;
+					score += Math.min(area / 5000, 3);
+
+					// First button in DOM often is "accept"
+					const index = Array.from(buttons).indexOf(btn);
+					score += Math.max(0, 2 - index * 0.5);
+
+					if (score > bestScore) {
+						bestScore = score;
+						bestButton = htmlBtn;
+					}
+				});
+
+				// Click the best button
+				if (bestButton !== null && bestScore > 0) {
+					(bestButton as HTMLElement).click();
+					return true;
+				}
+			}
+			return false;
+		});
+
+		if (clickedButton) {
+			dismissed++;
+			await page.waitForTimeout(300);
+		}
+	}
+
+	// Step 3: Last resort - hide fixed position overlays from DOM
+	await page.evaluate(() => {
+		const overlaySelectors = [
+			'[id*="cookie"]',
+			'[class*="cookie"]',
+			'[id*="consent"]',
+			'[class*="consent"]',
+			'[id*="cmp"]',
+			'[class*="cmp"]',
+			'[class*="gdpr"]',
+			'[class*="privacy"]',
+			'[class*="overlay"]',
+			'[class*="modal"]',
+			'[class*="popup"]',
+			'[class*="banner"]',
+		];
+
+		for (const selector of overlaySelectors) {
+			document.querySelectorAll(selector).forEach((el) => {
+				const htmlEl = el as HTMLElement;
+				const style = getComputedStyle(htmlEl);
+				if (style.position === "fixed" || style.position === "absolute") {
+					const zIndex = Number.parseInt(style.zIndex, 10);
+					if (zIndex > 100 || style.zIndex === "auto") {
+						htmlEl.style.display = "none";
+					}
+				}
+			});
+		}
+	});
+
+	return dismissed;
+}
+
 export class DismissOverlays extends Gadget({
 	description:
 		"Dismisses cookie banners, popups, and overlay dialogs that block interaction. Use this when clicks fail due to overlays intercepting them.",
@@ -108,143 +246,14 @@ export class DismissOverlays extends Gadget({
 		},
 	],
 }) {
-	constructor(private manager: BrowserSessionManager) {
+	constructor(private manager: IBrowserSessionManager) {
 		super();
 	}
 
 	async execute(params: this["params"]): Promise<string> {
 		try {
 			const page = this.manager.requirePage(params.pageId);
-			let dismissed = 0;
-
-			// Step 1: Try CMP-specific selectors (most reliable, language-agnostic)
-			for (const selector of CMP_ACCEPT_SELECTORS) {
-				try {
-					const btn = await page.$(selector);
-					if (btn && (await btn.isVisible())) {
-						await btn.click({ force: true });
-						dismissed++;
-						await page.waitForTimeout(300);
-						break; // Stop after first successful click
-					}
-				} catch {
-					// Selector not found or click failed, continue
-				}
-			}
-
-			// Step 2: If no CMP selector worked, use heuristic to find primary button in overlay
-			if (dismissed === 0) {
-				const clickedButton = await page.evaluate(() => {
-					// Find overlay containers by z-index + fixed position + consent-related class/id
-					const consentPattern = /cookie|consent|gdpr|privacy|cmp|banner|notice/i;
-					const overlayContainers: HTMLElement[] = [];
-
-					document.querySelectorAll("*").forEach((el) => {
-						const htmlEl = el as HTMLElement;
-						const style = getComputedStyle(htmlEl);
-						const zIndex = Number.parseInt(style.zIndex, 10) || 0;
-						const isPositioned = style.position === "fixed" || style.position === "absolute";
-						const classId = ((htmlEl.className || "") + " " + (htmlEl.id || "")).toLowerCase();
-						const hasConsentPattern = consentPattern.test(classId);
-
-						if (isPositioned && zIndex > 10 && hasConsentPattern && htmlEl.offsetWidth > 0) {
-							overlayContainers.push(htmlEl);
-						}
-					});
-
-					// For each container, find the most prominent button (usually "accept")
-					for (const container of overlayContainers) {
-						const buttons = container.querySelectorAll('button, [role="button"], a.btn, a[class*="btn"]');
-						if (buttons.length === 0) continue;
-
-						// Score buttons by visual prominence
-						let bestButton: HTMLElement | null = null;
-						let bestScore = -1;
-
-						buttons.forEach((btn) => {
-							const htmlBtn = btn as HTMLElement;
-							if (!htmlBtn.offsetWidth) return; // Not visible
-
-							const style = getComputedStyle(htmlBtn);
-							const bgColor = style.backgroundColor;
-							let score = 0;
-
-							// Colored background = higher score (accept buttons are usually colored)
-							if (bgColor && bgColor !== "transparent" && bgColor !== "rgba(0, 0, 0, 0)") {
-								// Check if it's a saturated color (not gray)
-								const rgbMatch = bgColor.match(/\d+/g);
-								if (rgbMatch) {
-									const [r, g, b] = rgbMatch.map(Number);
-									const max = Math.max(r, g, b);
-									const min = Math.min(r, g, b);
-									const saturation = max === 0 ? 0 : (max - min) / max;
-									score += saturation * 5;
-									// Bright backgrounds score higher
-									if (max > 100) score += 2;
-								}
-							}
-
-							// Larger buttons score higher
-							const area = htmlBtn.offsetWidth * htmlBtn.offsetHeight;
-							score += Math.min(area / 5000, 3);
-
-							// First button in DOM often is "accept"
-							const index = Array.from(buttons).indexOf(btn);
-							score += Math.max(0, 2 - index * 0.5);
-
-							if (score > bestScore) {
-								bestScore = score;
-								bestButton = htmlBtn;
-							}
-						});
-
-						// Click the best button
-						if (bestButton !== null && bestScore > 0) {
-							(bestButton as HTMLElement).click();
-							return true;
-						}
-					}
-					return false;
-				});
-
-				if (clickedButton) {
-					dismissed++;
-					await page.waitForTimeout(300);
-				}
-			}
-
-			// Step 3: Last resort - remove fixed position overlays from DOM
-			await page.evaluate(() => {
-				const consentPattern = /cookie|consent|gdpr|privacy|cmp|banner|notice/i;
-				const overlaySelectors = [
-					'[id*="cookie"]',
-					'[class*="cookie"]',
-					'[id*="consent"]',
-					'[class*="consent"]',
-					'[id*="cmp"]',
-					'[class*="cmp"]',
-					'[class*="gdpr"]',
-					'[class*="privacy"]',
-					'[class*="overlay"]',
-					'[class*="modal"]',
-					'[class*="popup"]',
-					'[class*="banner"]',
-				];
-
-				for (const selector of overlaySelectors) {
-					document.querySelectorAll(selector).forEach((el) => {
-						const htmlEl = el as HTMLElement;
-						const style = getComputedStyle(htmlEl);
-						if (style.position === "fixed" || style.position === "absolute") {
-							const zIndex = Number.parseInt(style.zIndex, 10);
-							if (zIndex > 100 || style.zIndex === "auto") {
-								htmlEl.style.display = "none";
-							}
-						}
-					});
-				}
-			});
-
+			const dismissed = await dismissOverlaysOnPage(page);
 			return JSON.stringify({ dismissed, success: true });
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
@@ -255,7 +264,7 @@ export class DismissOverlays extends Gadget({
 
 export class Click extends Gadget({
 	description:
-		"Clicks on an element. Use ListInteractiveElements to find the selector for the element you want to click. If click fails due to another element covering it, try force: true.",
+		"Clicks on an element. Use selectors from <CurrentBrowserState>. If click fails due to another element covering it, try force: true.",
 	schema: z.object({
 		pageId: z.string().describe("Page ID"),
 		selector: z.string().describe("CSS selector of element to click"),
@@ -284,7 +293,7 @@ export class Click extends Gadget({
 		},
 	],
 }) {
-	constructor(private manager: BrowserSessionManager) {
+	constructor(private manager: IBrowserSessionManager) {
 		super();
 	}
 
@@ -341,6 +350,64 @@ export class Click extends Gadget({
 	}
 }
 
+export class ClickAndNavigate extends Gadget({
+	description:
+		"Clicks an element and waits for navigation to complete. More efficient than calling Click followed by WaitForNavigation. Use for links, buttons that trigger page loads, form submits, etc.",
+	schema: z.object({
+		pageId: z.string().describe("Page ID"),
+		selector: z.string().describe("CSS selector of element to click"),
+		timeout: z.number().default(30000).describe("Navigation timeout in milliseconds"),
+		force: z
+			.boolean()
+			.default(false)
+			.describe("Force click even if element is covered by another"),
+	}),
+	examples: [
+		{
+			params: { pageId: "p1", selector: "a.login-link", timeout: 30000, force: false },
+			output: '{"success":true,"url":"https://example.com/login","title":"Login Page"}',
+			comment: "Click login link and wait for page to load",
+		},
+		{
+			params: { pageId: "p1", selector: "#submit-btn", timeout: 30000, force: false },
+			output: '{"success":true,"url":"https://example.com/dashboard","title":"Dashboard"}',
+			comment: "Click submit and wait for navigation",
+		},
+	],
+}) {
+	constructor(private manager: IBrowserSessionManager) {
+		super();
+	}
+
+	async execute(params: this["params"]): Promise<string> {
+		try {
+			const page = this.manager.requirePage(params.pageId);
+			const element = await page.$(params.selector);
+
+			if (!element) {
+				return JSON.stringify({ error: `Element not found: ${params.selector}` });
+			}
+
+			await humanDelay(30, 80);
+
+			// Click and wait for navigation simultaneously (uses Playwright default 'load')
+			await Promise.all([
+				page.waitForNavigation({ timeout: params.timeout }).catch(() => {}),
+				element.click({ force: params.force }),
+			]);
+
+			return JSON.stringify({
+				success: true,
+				url: page.url(),
+				title: await page.title(),
+			});
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error);
+			return JSON.stringify({ error: message });
+		}
+	}
+}
+
 export class Type extends Gadget({
 	description:
 		"Types text into an input element character by character with human-like timing. Use Fill for faster input that clears the field first.",
@@ -359,9 +426,14 @@ export class Type extends Gadget({
 			output: '{"success":true}',
 			comment: "Type email address with human-like timing",
 		},
+		{
+			params: { pageId: "p1", selector: "#password", text: "securePass123", delay: 80 },
+			output: '{"success":true}',
+			comment: "Type password with slower timing for realism",
+		},
 	],
 }) {
-	constructor(private manager: BrowserSessionManager) {
+	constructor(private manager: IBrowserSessionManager) {
 		super();
 	}
 
@@ -409,9 +481,19 @@ export class Fill extends Gadget({
 			output: '{"success":true}',
 			comment: "Fill search field",
 		},
+		{
+			params: { pageId: "p1", selector: "input[name='email']", value: "user@example.com" },
+			output: '{"success":true}',
+			comment: "Fill email using name attribute selector",
+		},
+		{
+			params: { pageId: "p1", selector: "input[placeholder='Enter username']", value: "myuser" },
+			output: '{"success":true}',
+			comment: "Fill using placeholder selector",
+		},
 	],
 }) {
-	constructor(private manager: BrowserSessionManager) {
+	constructor(private manager: IBrowserSessionManager) {
 		super();
 	}
 
@@ -429,6 +511,273 @@ export class Fill extends Gadget({
 			await element.fill(params.value);
 
 			return JSON.stringify({ success: true });
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error);
+			return JSON.stringify({ error: message });
+		}
+	}
+}
+
+export class FillForm extends Gadget({
+	description:
+		"Fills multiple form fields at once and optionally submits the form. More efficient than calling Fill multiple times. Use for login forms, registration forms, search with filters, etc.",
+	schema: z.object({
+		pageId: z.string().describe("Page ID"),
+		fields: z
+			.array(
+				z.object({
+					selector: z.string().describe("CSS selector of the input field"),
+					value: z.string().describe("Value to fill"),
+				}),
+			)
+			.min(1)
+			.describe("Array of fields to fill"),
+		submit: z
+			.string()
+			.optional()
+			.describe("CSS selector of submit button to click after filling fields (optional)"),
+		waitForNavigation: z
+			.boolean()
+			.default(false)
+			.describe("Wait for navigation after clicking submit button"),
+	}),
+	examples: [
+		{
+			params: {
+				pageId: "p1",
+				fields: [
+					{ selector: "#email", value: "user@example.com" },
+					{ selector: "#password", value: "secret123" },
+				],
+				submit: "button[type=submit]",
+				waitForNavigation: true,
+			},
+			output: '{"success":true,"filledCount":2,"submitted":true,"url":"https://example.com/dashboard"}',
+			comment: "Fill login form and submit",
+		},
+		{
+			params: {
+				pageId: "p1",
+				fields: [
+					{ selector: "#search", value: "query" },
+					{ selector: "#location", value: "NYC" },
+				],
+				submit: undefined,
+				waitForNavigation: false,
+			},
+			output: '{"success":true,"filledCount":2,"submitted":false}',
+			comment: "Fill multiple fields without submitting",
+		},
+	],
+}) {
+	constructor(private manager: IBrowserSessionManager) {
+		super();
+	}
+
+	async execute(params: this["params"]): Promise<string> {
+		try {
+			const page = this.manager.requirePage(params.pageId);
+			let filledCount = 0;
+			const errors: string[] = [];
+
+			// Fill each field
+			for (const field of params.fields) {
+				try {
+					const element = await page.$(field.selector);
+					if (!element) {
+						errors.push(`Field not found: ${field.selector}`);
+						continue;
+					}
+					await humanDelay(30, 80);
+					await element.fill(field.value);
+					filledCount++;
+				} catch (err) {
+					errors.push(`Failed to fill ${field.selector}: ${err instanceof Error ? err.message : String(err)}`);
+				}
+			}
+
+			// Submit if requested
+			let submitted = false;
+			let url: string | undefined;
+
+			if (params.submit) {
+				const submitBtn = await page.$(params.submit);
+				if (!submitBtn) {
+					return JSON.stringify({
+						success: filledCount > 0,
+						filledCount,
+						submitted: false,
+						error: `Submit button not found: ${params.submit}`,
+						fieldErrors: errors.length > 0 ? errors : undefined,
+					});
+				}
+
+				await humanDelay(50, 100);
+
+				if (params.waitForNavigation) {
+					await Promise.all([
+						page.waitForNavigation({ timeout: 30000 }).catch(() => {}),
+						submitBtn.click(),
+					]);
+				} else {
+					await submitBtn.click();
+				}
+
+				submitted = true;
+				url = page.url();
+			}
+
+			return JSON.stringify({
+				success: filledCount > 0,
+				filledCount,
+				submitted,
+				...(url ? { url } : {}),
+				...(errors.length > 0 ? { fieldErrors: errors } : {}),
+			});
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error);
+			return JSON.stringify({ error: message });
+		}
+	}
+}
+
+export class FillPinCode extends Gadget({
+	description:
+		"Fills a PIN/OTP code into multiple single-digit input fields (common pattern for 2FA/SMS codes). Auto-detects consecutive inputs or uses a selector pattern. Much more efficient than calling Fill for each digit.",
+	schema: z.object({
+		pageId: z.string().describe("Page ID"),
+		code: z.string().describe("The PIN/OTP code to fill (e.g., '134320')"),
+		selectorPattern: z
+			.string()
+			.optional()
+			.describe(
+				"CSS selector pattern with {i} placeholder for index (e.g., '[name=\"pin_{i}\"]'). If omitted, auto-detects PIN inputs.",
+			),
+		startIndex: z.number().default(0).describe("Starting index for the pattern (default: 0)"),
+		submit: z.string().optional().describe("CSS selector of submit button to click after filling"),
+		waitForNavigation: z.boolean().default(false).describe("Wait for navigation after submit"),
+	}),
+	examples: [
+		{
+			params: {
+				pageId: "p1",
+				code: "134320",
+				selectorPattern: '[name="x-pinlogin_pinlogin_{i}"]',
+				startIndex: 0,
+				waitForNavigation: false,
+			},
+			output: '{"success":true,"filledDigits":6,"detectedInputs":6}',
+			comment: "Fill 6-digit PIN into named inputs",
+		},
+		{
+			params: { pageId: "p1", code: "1234", submit: "button[type=submit]", waitForNavigation: true, startIndex: 0 },
+			output: '{"success":true,"filledDigits":4,"detectedInputs":4,"submitted":true,"url":"https://..."}',
+			comment: "Auto-detect PIN inputs, fill, and submit",
+		},
+	],
+}) {
+	constructor(private manager: IBrowserSessionManager) {
+		super();
+	}
+
+	async execute(params: this["params"]): Promise<string> {
+		try {
+			const page = this.manager.requirePage(params.pageId);
+			const digits = params.code.split("");
+			let filledDigits = 0;
+			let detectedInputs = 0;
+
+			if (params.selectorPattern) {
+				// Use provided pattern
+				for (let i = 0; i < digits.length; i++) {
+					const selector = params.selectorPattern.replace("{i}", String(params.startIndex + i));
+					const input = await page.$(selector);
+					if (input) {
+						detectedInputs++;
+						await humanDelay(30, 80);
+						await input.fill(digits[i]);
+						filledDigits++;
+					}
+				}
+			} else {
+				// Auto-detect PIN inputs: look for consecutive single-char inputs
+				const inputs = await page.$$(
+					'input[type="tel"], input[type="text"], input[type="number"], input[type="password"]',
+				);
+
+				// Filter to visible, single-char inputs that look like PIN fields
+				const pinInputs: Awaited<ReturnType<typeof page.$>>[] = [];
+				for (const input of inputs) {
+					try {
+						const isVisible = await input.isVisible();
+						const maxLength = await input.getAttribute("maxlength");
+						const size = await input.getAttribute("size");
+
+						// PIN inputs typically have maxlength=1 or size=1, or are type=tel
+						const looksLikePinInput =
+							maxLength === "1" || size === "1" || (await input.getAttribute("type")) === "tel";
+
+						if (isVisible && looksLikePinInput) {
+							pinInputs.push(input);
+						}
+					} catch {
+						// Skip detached elements
+					}
+				}
+
+				detectedInputs = pinInputs.length;
+
+				// Fill digits into detected inputs
+				for (let i = 0; i < Math.min(digits.length, pinInputs.length); i++) {
+					const input = pinInputs[i];
+					if (input) {
+						await humanDelay(30, 80);
+						await input.fill(digits[i]);
+						filledDigits++;
+					}
+				}
+			}
+
+			// Submit if requested
+			let submitted = false;
+			let url: string | undefined;
+
+			if (params.submit) {
+				const submitBtn = await page.$(params.submit);
+				if (!submitBtn) {
+					return JSON.stringify({
+						success: filledDigits > 0,
+						filledDigits,
+						detectedInputs,
+						submitted: false,
+						error: `Submit button not found: ${params.submit}`,
+					});
+				}
+
+				await humanDelay(50, 100);
+
+				if (params.waitForNavigation) {
+					await Promise.all([
+						page.waitForNavigation({ timeout: 30000 }).catch(() => {}),
+						submitBtn.click(),
+					]);
+				} else {
+					await submitBtn.click();
+				}
+
+				submitted = true;
+				url = page.url();
+			}
+
+			return JSON.stringify({
+				success: filledDigits === digits.length,
+				filledDigits,
+				detectedInputs,
+				...(submitted ? { submitted, url } : {}),
+				...(filledDigits < digits.length
+					? { warning: `Only filled ${filledDigits}/${digits.length} digits` }
+					: {}),
+			});
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
 			return JSON.stringify({ error: message });
@@ -458,7 +807,7 @@ export class PressKey extends Gadget({
 		},
 	],
 }) {
-	constructor(private manager: BrowserSessionManager) {
+	constructor(private manager: IBrowserSessionManager) {
 		super();
 	}
 
@@ -497,7 +846,7 @@ export class Select extends Gadget({
 		},
 	],
 }) {
-	constructor(private manager: BrowserSessionManager) {
+	constructor(private manager: IBrowserSessionManager) {
 		super();
 	}
 
@@ -552,7 +901,7 @@ export class Check extends Gadget({
 		},
 	],
 }) {
-	constructor(private manager: BrowserSessionManager) {
+	constructor(private manager: IBrowserSessionManager) {
 		super();
 	}
 
@@ -595,7 +944,7 @@ export class Hover extends Gadget({
 		},
 	],
 }) {
-	constructor(private manager: BrowserSessionManager) {
+	constructor(private manager: IBrowserSessionManager) {
 		super();
 	}
 
@@ -634,7 +983,7 @@ export class Scroll extends Gadget({
 		},
 	],
 }) {
-	constructor(private manager: BrowserSessionManager) {
+	constructor(private manager: IBrowserSessionManager) {
 		super();
 	}
 
@@ -661,14 +1010,14 @@ export class Scroll extends Gadget({
 					return JSON.stringify({ error: `Element not found: ${params.selector}` });
 				}
 				await element.evaluate(
-					(el, delta) => {
+					(el: Element, delta: { x: number; y: number }) => {
 						el.scrollBy(delta.x, delta.y);
 					},
 					{ x: deltaX, y: deltaY },
 				);
 			} else {
 				await page.evaluate(
-					(delta) => {
+					(delta: { x: number; y: number }) => {
 						window.scrollBy(delta.x, delta.y);
 					},
 					{ x: deltaX, y: deltaY },

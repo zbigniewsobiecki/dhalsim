@@ -1,0 +1,4 @@
+[test]
+# Browser tests are inherently slow - launching Chromium takes time
+# Under parallel load, operations can take even longer
+timeout = 30000

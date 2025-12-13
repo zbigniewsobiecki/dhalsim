@@ -1,9 +1,21 @@
-// Browser management
-export { CloseBrowser, ListBrowsers, StartBrowser } from "./browser";
 // Content extraction
-export { GetPageContent, ListInteractiveElements, Screenshot } from "./content";
+export { GetPageContent, Screenshot } from "./content";
 // Interactions
-export { Check, Click, DismissOverlays, Fill, Hover, PressKey, Scroll, Select, Type } from "./interaction";
+export {
+	Check,
+	Click,
+	ClickAndNavigate,
+	DismissOverlays,
+	Fill,
+	FillForm,
+	FillPinCode,
+	Hover,
+	PressKey,
+	Scroll,
+	Select,
+	Type,
+	dismissOverlaysOnPage,
+} from "./interaction";
 // Navigation
 export { GoBack, GoForward, Navigate, Reload } from "./navigation";
 // Page management
@@ -14,3 +26,6 @@ export { ExecuteScript } from "./script";
 
 // Waiting
 export { Wait, WaitForElement, WaitForNavigation } from "./wait";
+
+// User input
+export { RequestUserAssistance } from "./user-input";

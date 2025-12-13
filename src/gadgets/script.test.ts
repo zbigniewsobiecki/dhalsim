@@ -1,20 +1,17 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { testGadget } from "llmist/testing";
-import { BrowserSessionManager } from "../session";
-import { StartBrowser } from "./browser";
+import { TestBrowserSessionManager } from "../session/test-manager";
 import { Navigate } from "./navigation";
 import { ExecuteScript } from "./script";
 
 describe("Script Gadgets", () => {
-	let manager: BrowserSessionManager;
+	let manager: TestBrowserSessionManager;
 	let pageId: string;
 
 	beforeAll(async () => {
-		manager = new BrowserSessionManager();
-		const startGadget = new StartBrowser(manager);
-		const result = await testGadget(startGadget, {});
-		const parsed = JSON.parse(result.result!);
-		pageId = parsed.pageId;
+		manager = new TestBrowserSessionManager();
+		const result = await manager.startBrowser({ headless: true });
+		pageId = result.pageId;
 
 		const navGadget = new Navigate(manager);
 		await testGadget(navGadget, {

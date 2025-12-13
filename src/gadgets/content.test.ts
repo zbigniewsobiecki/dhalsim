@@ -1,8 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { testGadget } from "llmist/testing";
-import { BrowserSessionManager } from "../session";
-import { StartBrowser } from "./browser";
-import { GetPageContent, ListInteractiveElements, Screenshot } from "./content";
+import { TestBrowserSessionManager } from "../session/test-manager";
+import { GetPageContent, Screenshot } from "./content";
 import { Navigate } from "./navigation";
 
 const TEST_HTML = `
@@ -25,15 +24,13 @@ const TEST_HTML = `
 `;
 
 describe("Content Gadgets", () => {
-	let manager: BrowserSessionManager;
+	let manager: TestBrowserSessionManager;
 	let pageId: string;
 
 	beforeAll(async () => {
-		manager = new BrowserSessionManager();
-		const startGadget = new StartBrowser(manager);
-		const result = await testGadget(startGadget, {});
-		const parsed = JSON.parse(result.result!);
-		pageId = parsed.pageId;
+		manager = new TestBrowserSessionManager();
+		const result = await manager.startBrowser({ headless: true });
+		pageId = result.pageId;
 
 		// Navigate to test page
 		const navGadget = new Navigate(manager);
@@ -121,49 +118,6 @@ describe("Content Gadgets", () => {
 			expect(parsed.fullPage).toBe(true);
 			expect(mediaResult.media).toBeDefined();
 			expect(mediaResult.media[0].data).toBeDefined();
-		});
-	});
-
-	describe("ListInteractiveElements", () => {
-		it("should list all interactive elements", async () => {
-			const gadget = new ListInteractiveElements(manager);
-			const result = await testGadget(gadget, { pageId });
-
-			expect(result.error).toBeUndefined();
-			const parsed = JSON.parse(result.result!);
-			expect(parsed.elements).toBeInstanceOf(Array);
-			expect(parsed.elements.length).toBeGreaterThanOrEqual(5);
-
-			// Should have button, link, input, select, textarea
-			const types = parsed.elements.map((e: { type: string }) => e.type);
-			expect(types).toContain("button");
-			expect(types).toContain("link");
-			expect(types).toContain("input");
-			expect(types).toContain("select");
-			expect(types).toContain("textarea");
-		});
-
-		it("should return error for non-existent page", async () => {
-			const gadget = new ListInteractiveElements(manager);
-			const result = await testGadget(gadget, { pageId: "p999" });
-
-			expect(result.error).toBeUndefined();
-			const parsed = JSON.parse(result.result!);
-			expect(parsed.error).toContain("not found");
-		});
-
-		it("should filter elements by type", async () => {
-			const gadget = new ListInteractiveElements(manager);
-			const result = await testGadget(gadget, {
-				pageId,
-				types: ["button", "link"],
-			});
-
-			expect(result.error).toBeUndefined();
-			const parsed = JSON.parse(result.result!);
-			expect(
-				parsed.elements.every((e: { type: string }) => ["button", "link"].includes(e.type)),
-			).toBe(true);
 		});
 	});
 });
