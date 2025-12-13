@@ -382,5 +382,67 @@ describe("PageStateScanner", () => {
 			// Clean up
 			await manager.closePage(testPageId);
 		});
+
+		it("should show DATA_ATTRIBUTES section with data-test values", async () => {
+			// Create a page with data-test attributes
+			const dataTestHtml = `
+				<!DOCTYPE html>
+				<html>
+				<head><title>Data Test</title></head>
+				<body>
+					<div data-test="offer-title">Job Title</div>
+					<a data-test="link-offer" href="/job">Apply</a>
+					<span data-test="salary-box">50k</span>
+					<button data-test="submit-btn">Submit</button>
+				</body>
+				</html>
+			`;
+			const { pageId: testPageId } = await manager.newPage(
+				manager.listBrowsers()[0].id,
+				`data:text/html,${encodeURIComponent(dataTestHtml)}`,
+			);
+
+			const state = await scanner.scanAllPages();
+
+			// Should show DATA_ATTRIBUTES section
+			expect(state).toContain("DATA_ATTRIBUTES (4):");
+			expect(state).toContain("link-offer");
+			expect(state).toContain("offer-title");
+			expect(state).toContain("salary-box");
+			expect(state).toContain("submit-btn");
+
+			// Clean up
+			await manager.closePage(testPageId);
+		});
+
+		it("should limit DATA_ATTRIBUTES and show hint for more", async () => {
+			// Create a page with many data-test attributes (more than 30)
+			const manyAttrsHtml = `
+				<!DOCTYPE html>
+				<html>
+				<head><title>Many Attrs</title></head>
+				<body>
+					${Array.from({ length: 40 }, (_, i) => `<div data-test="attr-${String(i).padStart(2, "0")}">Item ${i}</div>`).join("\n")}
+				</body>
+				</html>
+			`;
+			const { pageId: testPageId } = await manager.newPage(
+				manager.listBrowsers()[0].id,
+				`data:text/html,${encodeURIComponent(manyAttrsHtml)}`,
+			);
+
+			const state = await scanner.scanAllPages();
+
+			// Should show total count
+			expect(state).toContain("DATA_ATTRIBUTES (40):");
+			// Should show first 30 (sorted alphabetically)
+			expect(state).toContain("attr-00");
+			expect(state).toContain("attr-29");
+			// Should show hint for more (which confirms attr-30+ are hidden)
+			expect(state).toContain("[10 more - use GetFullPageContent with structure=true]");
+
+			// Clean up
+			await manager.closePage(testPageId);
+		});
 	});
 });

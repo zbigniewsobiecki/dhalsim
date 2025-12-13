@@ -41,6 +41,7 @@ interface PageState {
 	textareas: ElementInfo[];
 	menuitems: ElementInfo[];
 	checkboxes: ElementInfo[];
+	dataAttributes: string[];
 }
 
 /**
@@ -118,12 +119,13 @@ export class PageStateScanner {
 	 * Scan a single page for state.
 	 */
 	private async scanPage(pageId: string, page: Page): Promise<PageState> {
-		const [url, title, content, structure, elements] = await Promise.all([
+		const [url, title, content, structure, elements, dataAttributes] = await Promise.all([
 			page.url(),
 			page.title(),
 			this.getContentSummary(page),
 			this.getStructure(page),
 			this.getInteractiveElements(page),
+			this.getDataAttributes(page),
 		]);
 
 		return {
@@ -133,7 +135,26 @@ export class PageStateScanner {
 			content,
 			structure,
 			...elements,
+			dataAttributes,
 		};
+	}
+
+	/**
+	 * Get all data-test attribute values from the page.
+	 */
+	private async getDataAttributes(page: Page): Promise<string[]> {
+		try {
+			return await page.evaluate(() => {
+				const attrs = new Set<string>();
+				document.querySelectorAll("[data-test]").forEach((el) => {
+					const val = el.getAttribute("data-test");
+					if (val) attrs.add(val);
+				});
+				return [...attrs].sort();
+			});
+		} catch {
+			return [];
+		}
 	}
 
 	/**
@@ -442,6 +463,21 @@ export class PageStateScanner {
 			for (const el of state.checkboxes) {
 				const textStr = el.text ? ` "${el.text}"` : "";
 				lines.push(`  ${el.selector}${textStr}`);
+			}
+		}
+
+		// Show data-test attributes for ExecuteScript use
+		if (state.dataAttributes.length > 0) {
+			lines.push("");
+			const maxAttrs = 30;
+			const showAll = state.dataAttributes.length <= maxAttrs;
+			const attrsToShow = showAll ? state.dataAttributes : state.dataAttributes.slice(0, maxAttrs);
+			const hiddenCount = state.dataAttributes.length - attrsToShow.length;
+
+			lines.push(`DATA_ATTRIBUTES (${state.dataAttributes.length}):`);
+			lines.push(`  ${attrsToShow.join(", ")}`);
+			if (hiddenCount > 0) {
+				lines.push(`  [${hiddenCount} more - use GetFullPageContent with structure=true]`);
 			}
 		}
 

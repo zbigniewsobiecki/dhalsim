@@ -30,7 +30,7 @@ async function resizeIfNeeded(buffer: Buffer): Promise<Buffer> {
 
 export class GetFullPageContent extends Gadget({
 	description:
-		"Gets the full visible text content of a page or specific element(s) with no truncation. Use 'selectors' array to query multiple elements at once.",
+		"Gets the full visible text content of a page or specific element(s) with no truncation. Use 'selectors' array to query multiple elements at once. Use 'structure=true' to get DOM structure info for ExecuteScript.",
 	schema: z.object({
 		pageId: z.string().describe("Page ID"),
 		selector: z
@@ -41,6 +41,12 @@ export class GetFullPageContent extends Gadget({
 			.array(z.string())
 			.optional()
 			.describe("Array of CSS selectors to query multiple elements at once."),
+		structure: z
+			.boolean()
+			.optional()
+			.describe(
+				"Return DOM structure info (data-test attrs, class samples, element counts) instead of text content. Useful for writing ExecuteScript.",
+			),
 	}),
 	examples: [
 		{
@@ -58,6 +64,12 @@ export class GetFullPageContent extends Gadget({
 			output: '{"results":[{"text":"Invoice 1..."},{"text":"Invoice 2..."},{"text":"Invoice 3..."}]}',
 			comment: "Get text from multiple elements at once (results match selector order)",
 		},
+		{
+			params: { pageId: "p1", structure: true },
+			output:
+				'{"dataAttributes":["offer-title","link-offer"],"sampleClasses":{"section":["tiles_c6logt4"]},"elementCounts":{"section":50,"a":337}}',
+			comment: "Get DOM structure for ExecuteScript",
+		},
 	],
 }) {
 	constructor(private manager: IBrowserSessionManager) {
@@ -67,6 +79,56 @@ export class GetFullPageContent extends Gadget({
 	async execute(params: this["params"]): Promise<string> {
 		try {
 			const page = this.manager.requirePage(params.pageId);
+
+			// Structure mode: return DOM info for ExecuteScript
+			if (params.structure) {
+				const info = await page.evaluate(() => {
+					// Collect all data-test attributes
+					const dataAttrs = new Set<string>();
+					document.querySelectorAll("[data-test]").forEach((el) => {
+						const val = el.getAttribute("data-test");
+						if (val) dataAttrs.add(val);
+					});
+
+					// Sample class names by tag type (first 10 per tag, filter garbage)
+					const sampleClasses: Record<string, string[]> = {};
+					const tags = ["section", "div", "article", "a", "span", "ul", "li"];
+					for (const tag of tags) {
+						const classes = new Set<string>();
+						document.querySelectorAll(`${tag}[class]`).forEach((el) => {
+							if (classes.size < 10) {
+								const cls = el.className
+									.split(" ")
+									.find(
+										(c) =>
+											c.length > 2 &&
+											!c.startsWith("_") &&
+											!c.startsWith("css-") &&
+											!c.startsWith("sc-") &&
+											!/^[a-z]{1,3}-[a-z0-9]+$/.test(c),
+									);
+								if (cls) classes.add(cls);
+							}
+						});
+						if (classes.size > 0) sampleClasses[tag] = [...classes];
+					}
+
+					// Element counts
+					const counts: Record<string, number> = {};
+					const countTags = ["section", "article", "div", "a", "button", "form", "ul", "li", "table", "tr"];
+					for (const tag of countTags) {
+						counts[tag] = document.querySelectorAll(tag).length;
+					}
+
+					return {
+						dataAttributes: [...dataAttrs].sort(),
+						sampleClasses,
+						elementCounts: counts,
+					};
+				});
+
+				return JSON.stringify(info);
+			}
 
 			// Multi-selector mode: query multiple elements at once
 			// Results are returned in same order as input selectors (no selector echoed back to avoid LLM learning to construct them)

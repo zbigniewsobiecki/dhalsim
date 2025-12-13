@@ -75,6 +75,58 @@ describe("Content Gadgets", () => {
 			const parsed = JSON.parse(result.result!);
 			expect(parsed.error).toContain("not found");
 		});
+
+		it("should return DOM structure info when structure=true", async () => {
+			// Create a page with data-test attributes and various elements
+			const structureHtml = `
+				<!DOCTYPE html>
+				<html>
+				<head><title>Structure Test</title></head>
+				<body>
+					<section class="joblisting" data-test="section-job">
+						<div class="jobcard" data-test="offer-title">Job Title</div>
+						<a class="applybtn" data-test="link-offer" href="/apply">Apply</a>
+					</section>
+					<section class="sidebar">
+						<div class="filterbox">Filters</div>
+					</section>
+					<button data-test="submit">Submit</button>
+				</body>
+				</html>
+			`;
+
+			const navGadget = new Navigate(manager);
+			await testGadget(navGadget, {
+				pageId,
+				url: `data:text/html,${encodeURIComponent(structureHtml)}`,
+			});
+
+			const gadget = new GetFullPageContent(manager);
+			const result = await testGadget(gadget, { pageId, structure: true });
+
+			expect(result.error).toBeUndefined();
+			const parsed = JSON.parse(result.result!);
+
+			// Should have dataAttributes
+			expect(parsed.dataAttributes).toBeDefined();
+			expect(parsed.dataAttributes).toContain("link-offer");
+			expect(parsed.dataAttributes).toContain("offer-title");
+			expect(parsed.dataAttributes).toContain("section-job");
+			expect(parsed.dataAttributes).toContain("submit");
+
+			// Should have sampleClasses (check they exist, specific values may vary due to filtering)
+			expect(parsed.sampleClasses).toBeDefined();
+			expect(parsed.sampleClasses.section).toBeDefined();
+			expect(parsed.sampleClasses.section.length).toBeGreaterThan(0);
+			expect(parsed.sampleClasses.div).toBeDefined();
+			expect(parsed.sampleClasses.div.length).toBeGreaterThan(0);
+
+			// Should have elementCounts
+			expect(parsed.elementCounts).toBeDefined();
+			expect(parsed.elementCounts.section).toBe(2);
+			expect(parsed.elementCounts.div).toBeGreaterThan(0);
+			expect(parsed.elementCounts.button).toBe(1);
+		});
 	});
 
 	describe("Screenshot", () => {
