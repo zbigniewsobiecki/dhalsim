@@ -37,6 +37,13 @@ Dropdowns are TOGGLES - clicking the same trigger twice will close it!
 - If menuitems appear, click the menuitem ONCE - do NOT click the trigger again
 - One click opens, second click closes
 
+## Avoid Infinite Loops
+If an action doesn't produce the expected result after 2-3 attempts:
+1. Stop retrying the same action
+2. Use GetFullPageContent or Screenshot to diagnose
+3. Try a different approach or skip and continue
+NEVER click the same element more than 3 times in a row.
+
 ## Available Gadgets
 - Navigate: Go to a URL
 - Click: Click an element (auto-waits for element to be actionable)

@@ -4,7 +4,7 @@ import { humanDelay } from "../stealth";
 import { selectorSchema } from "./selector-validator";
 import { getErrorMessage, truncate } from "../utils/errors";
 import { checkElementExists } from "../utils/element-checks";
-import { ELEMENT_TEXT_MAX_LENGTH, DEFAULT_CLICK_TIMEOUT } from "../utils/constants";
+import { ELEMENT_TEXT_MAX_LENGTH, DEFAULT_CLICK_TIMEOUT, UI_SETTLE_DELAY } from "../utils/constants";
 
 export class Click extends Gadget({
 	description:
@@ -93,6 +93,8 @@ export class Click extends Gadget({
 						clickCount: params.clickCount,
 						timeout: DEFAULT_CLICK_TIMEOUT,
 					});
+					// Allow async UI (dropdowns, animations) to settle before state scan
+					await page.waitForTimeout(UI_SETTLE_DELAY);
 					return JSON.stringify({
 						success: true,
 						elementText: text,
@@ -107,6 +109,8 @@ export class Click extends Gadget({
 							clickCount: params.clickCount,
 							force: true,
 						});
+						// Allow async UI (dropdowns, animations) to settle before state scan
+						await page.waitForTimeout(UI_SETTLE_DELAY);
 						return JSON.stringify({
 							success: true,
 							elementText: text,
@@ -124,6 +128,8 @@ export class Click extends Gadget({
 				clickCount: params.clickCount,
 				force: true,
 			});
+			// Allow async UI (dropdowns, animations) to settle before state scan
+			await page.waitForTimeout(UI_SETTLE_DELAY);
 
 			return JSON.stringify({
 				success: true,

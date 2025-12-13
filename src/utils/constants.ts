@@ -12,6 +12,7 @@ export const TOOL_NAME_MAX_LENGTH = 27;
 export const DEFAULT_CLICK_TIMEOUT = 5000;
 export const DEFAULT_NAVIGATION_TIMEOUT = 30000;
 export const OVERLAY_DISMISS_DELAY = 300;
+export const UI_SETTLE_DELAY = 150; // Allow dropdowns/animations to render after click
 
 // Button scoring algorithm weights for overlay dismissal heuristics
 export const BUTTON_SCORING = {
