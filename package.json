@@ -12,9 +12,9 @@
 		"gadgets": "./dist/index.js",
 		"factory": "./dist/index.js",
 		"subagents": {
-			"BrowseWeb": {
+			"Dhalsim": {
 				"entryPoint": "./dist/index.js",
-				"export": "BrowseWeb",
+				"export": "Dhalsim",
 				"description": "Browse websites and accomplish tasks autonomously",
 				"uses": ["Navigate", "Click", "Screenshot", "GetFullPageContent", "Fill"],
 				"defaultModel": "sonnet",
@@ -23,7 +23,7 @@
 		},
 		"presets": {
 			"all": "*",
-			"subagent": ["BrowseWeb"],
+			"subagent": ["Dhalsim"],
 			"readonly": ["Navigate", "Screenshot", "GetFullPageContent", "ListPages"],
 			"minimal": ["Navigate", "Screenshot", "GetFullPageContent"]
 		},

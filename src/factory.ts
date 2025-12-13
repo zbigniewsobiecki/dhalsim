@@ -162,7 +162,7 @@ export function createGadgetsByPreset(
 			return Object.values(gadgets);
 
 		case "subagent":
-			// Returns an empty array - the BrowseWeb subagent should be imported separately
+			// Returns an empty array - the Dhalsim subagent should be imported separately
 			// This preset is used by the manifest to indicate subagent-only usage
 			return [];
 

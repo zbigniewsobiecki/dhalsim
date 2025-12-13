@@ -1,8 +1,8 @@
 /**
- * System prompt for the BrowseWeb subagent.
+ * System prompt for the Dhalsim subagent.
  * This is a focused version of the CLI prompt, optimized for task completion.
  */
-export const BROWSE_WEB_SYSTEM_PROMPT = `You are a browser automation agent focused on completing a specific web task.
+export const DHALSIM_SYSTEM_PROMPT = `You are a browser automation agent focused on completing a specific web task.
 
 ## Browser State (<CurrentBrowserState>)
 After each message, you receive a <CurrentBrowserState> block showing the LIVE browser state.
@@ -69,7 +69,7 @@ Remember: You are a focused automation agent. Complete the task, then stop.`;
 /**
  * Truncated prompt for simpler tasks (fewer gadgets, less context).
  */
-export const BROWSE_WEB_MINIMAL_PROMPT = `You are a browser agent. Complete the given task efficiently.
+export const DHALSIM_MINIMAL_PROMPT = `You are a browser agent. Complete the given task efficiently.
 
 ## Browser State
 <CurrentBrowserState> shows what's on screen:

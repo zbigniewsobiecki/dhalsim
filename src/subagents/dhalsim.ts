@@ -16,28 +16,28 @@ import {
 	WaitForElement,
 	Wait,
 } from "../gadgets";
-import { BROWSE_WEB_SYSTEM_PROMPT } from "./prompts";
+import { DHALSIM_SYSTEM_PROMPT } from "./prompts";
 
 /**
- * BrowseWeb subagent - a high-level gadget that runs its own agent loop
+ * Dhalsim subagent - a high-level gadget that runs its own agent loop
  * to accomplish web browsing tasks autonomously.
  *
  * This is the recommended way for most users to interact with dhalsim.
- * Instead of registering 26+ individual gadgets, just use BrowseWeb
+ * Instead of registering 26+ individual gadgets, just use Dhalsim
  * and let it handle the complexity of web automation.
  *
  * @example
  * ```typescript
  * // In your agent
- * const browseWeb = new BrowseWeb();
- * registry.register('BrowseWeb', browseWeb);
+ * const dhalsim = new Dhalsim();
+ * registry.register('Dhalsim', dhalsim);
  *
  * // The agent can now call:
- * // BrowseWeb(task="Find the price of iPhone 16 Pro", url="https://apple.com")
+ * // Dhalsim(task="Find the price of iPhone 16 Pro", url="https://apple.com")
  * ```
  */
-export class BrowseWeb extends Gadget({
-	name: "BrowseWeb",
+export class Dhalsim extends Gadget({
+	name: "Dhalsim",
 	description: `Browse a website and accomplish a task autonomously.
 This gadget launches a browser, navigates to the URL, and uses AI to complete the task.
 Returns the result and any screenshots taken.
@@ -59,7 +59,7 @@ Use this for web research, data extraction, form filling, or any web-based task.
 
 		// Resolve configuration with priority:
 		// 1. Explicit params (runtime override)
-		// 2. Subagent config from context (CLI [subagents.BrowseWeb] or [profile.subagents.BrowseWeb])
+		// 2. Subagent config from context (CLI [subagents.Dhalsim] or [profile.subagents.Dhalsim])
 		// 3. Parent agent model from context (for model inheritance)
 		// 4. Hardcoded fallback defaults
 		//
@@ -69,7 +69,7 @@ Use this for web research, data extraction, form filling, or any web-based task.
 			agentConfig?: { model: string; temperature?: number };
 			subagentConfig?: Record<string, Record<string, unknown>>;
 		};
-		const subagentConfig = extendedCtx?.subagentConfig?.BrowseWeb ?? {};
+		const subagentConfig = extendedCtx?.subagentConfig?.Dhalsim ?? {};
 		const parentModel = extendedCtx?.agentConfig?.model;
 
 		const model = params.model
@@ -90,7 +90,7 @@ Use this for web research, data extraction, form filling, or any web-based task.
 		let totalCost = 0;
 
 		// Create a fresh session manager for isolation
-		// Each BrowseWeb call gets its own browser instance
+		// Each Dhalsim call gets its own browser instance
 		const manager = new BrowserSessionManager();
 
 		try {
@@ -126,7 +126,7 @@ Use this for web research, data extraction, form filling, or any web-based task.
 			// Build the subagent with abort signal support
 			const builder = new AgentBuilder(client)
 				.withModel(model)
-				.withSystem(BROWSE_WEB_SYSTEM_PROMPT)
+				.withSystem(DHALSIM_SYSTEM_PROMPT)
 				.withMaxIterations(maxIterations)
 				.withGadgets(...gadgets)
 				.withTrailingMessage(() => pageStateScanner.getCachedState())

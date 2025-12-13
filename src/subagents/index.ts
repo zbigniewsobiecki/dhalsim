@@ -1,5 +1,5 @@
 // Subagent implementations
-export { BrowseWeb } from "./browse-web";
+export { Dhalsim } from "./dhalsim";
 
 // System prompts (for customization)
-export { BROWSE_WEB_SYSTEM_PROMPT, BROWSE_WEB_MINIMAL_PROMPT } from "./prompts";
+export { DHALSIM_SYSTEM_PROMPT, DHALSIM_MINIMAL_PROMPT } from "./prompts";

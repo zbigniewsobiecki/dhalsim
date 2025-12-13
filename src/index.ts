@@ -16,4 +16,4 @@ export {
 } from "./factory";
 
 // Subagents (high-level gadgets with internal agent loops)
-export { BrowseWeb, BROWSE_WEB_SYSTEM_PROMPT, BROWSE_WEB_MINIMAL_PROMPT } from "./subagents";
+export { Dhalsim, DHALSIM_SYSTEM_PROMPT, DHALSIM_MINIMAL_PROMPT } from "./subagents";
