@@ -72,5 +72,85 @@ describe("Script Gadgets", () => {
 			const parsed = JSON.parse(result.result!);
 			expect(parsed.error).toContain("test error");
 		});
+
+		it("should capture console.log output", async () => {
+			const gadget = new ExecuteScript(manager);
+			const result = await testGadget(gadget, {
+				pageId,
+				script: `
+					console.log('hello world');
+					return 42;
+				`,
+			});
+
+			expect(result.error).toBeUndefined();
+			const parsed = JSON.parse(result.result!);
+			expect(parsed.result).toBe(42);
+			expect(parsed.console).toBeDefined();
+			expect(parsed.console).toContain("[log] hello world");
+		});
+
+		it("should capture multiple console types", async () => {
+			const gadget = new ExecuteScript(manager);
+			const result = await testGadget(gadget, {
+				pageId,
+				script: `
+					console.log('info message');
+					console.warn('warning message');
+					console.error('error message');
+					return 'done';
+				`,
+			});
+
+			expect(result.error).toBeUndefined();
+			const parsed = JSON.parse(result.result!);
+			expect(parsed.console).toContain("[log] info message");
+			expect(parsed.console).toContain("[warning] warning message");
+			expect(parsed.console).toContain("[error] error message");
+		});
+
+		it("should capture console output even when script throws", async () => {
+			const gadget = new ExecuteScript(manager);
+			const result = await testGadget(gadget, {
+				pageId,
+				script: `
+					console.log('before error');
+					throw new Error('oops');
+				`,
+			});
+
+			expect(result.error).toBeUndefined();
+			const parsed = JSON.parse(result.result!);
+			expect(parsed.error).toContain("oops");
+			expect(parsed.console).toContain("[log] before error");
+		});
+
+		it("should not include console field when no logs", async () => {
+			const gadget = new ExecuteScript(manager);
+			const result = await testGadget(gadget, {
+				pageId,
+				script: "return 'silent'",
+			});
+
+			expect(result.error).toBeUndefined();
+			const parsed = JSON.parse(result.result!);
+			expect(parsed.result).toBe("silent");
+			expect(parsed.console).toBeUndefined();
+		});
+
+		it("should truncate long console messages", async () => {
+			const gadget = new ExecuteScript(manager);
+			const longMessage = "x".repeat(1000);
+			const result = await testGadget(gadget, {
+				pageId,
+				script: `console.log('${longMessage}'); return true;`,
+			});
+
+			expect(result.error).toBeUndefined();
+			const parsed = JSON.parse(result.result!);
+			expect(parsed.console).toBeDefined();
+			expect(parsed.console[0].length).toBeLessThan(600); // 500 + prefix + "..."
+			expect(parsed.console[0]).toContain("...");
+		});
 	});
 });
