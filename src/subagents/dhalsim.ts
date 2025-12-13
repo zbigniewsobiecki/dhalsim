@@ -37,7 +37,7 @@ import { DHALSIM_SYSTEM_PROMPT } from "./prompts";
  * ```
  */
 export class Dhalsim extends Gadget({
-	name: "Dhalsim",
+	name: "BrowseWeb",
 	description: `Browse a website and accomplish a task autonomously.
 This gadget launches a browser, navigates to the URL, and uses AI to complete the task.
 Returns the result and any screenshots taken.

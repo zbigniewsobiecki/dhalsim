@@ -12,7 +12,7 @@
 		"gadgets": "./dist/index.js",
 		"factory": "./dist/index.js",
 		"subagents": {
-			"Dhalsim": {
+			"BrowseWeb": {
 				"entryPoint": "./dist/index.js",
 				"export": "Dhalsim",
 				"description": "Browse websites and accomplish tasks autonomously",
@@ -23,7 +23,7 @@
 		},
 		"presets": {
 			"all": "*",
-			"subagent": ["Dhalsim"],
+			"subagent": ["BrowseWeb"],
 			"readonly": ["Navigate", "Screenshot", "GetFullPageContent", "ListPages"],
 			"minimal": ["Navigate", "Screenshot", "GetFullPageContent"]
 		},
