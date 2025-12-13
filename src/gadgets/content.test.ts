@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { testGadget } from "llmist/testing";
 import { TestBrowserSessionManager } from "../session/test-manager";
-import { GetPageContent, Screenshot } from "./content";
+import { GetFullPageContent, Screenshot } from "./content";
 import { Navigate } from "./navigation";
 
 const TEST_HTML = `
@@ -44,9 +44,9 @@ describe("Content Gadgets", () => {
 		await manager.closeAll();
 	});
 
-	describe("GetPageContent", () => {
+	describe("GetFullPageContent", () => {
 		it("should get page text content", async () => {
-			const gadget = new GetPageContent(manager);
+			const gadget = new GetFullPageContent(manager);
 			const result = await testGadget(gadget, { pageId });
 
 			expect(result.error).toBeUndefined();
@@ -56,7 +56,7 @@ describe("Content Gadgets", () => {
 		});
 
 		it("should get content from specific selector", async () => {
-			const gadget = new GetPageContent(manager);
+			const gadget = new GetFullPageContent(manager);
 			const result = await testGadget(gadget, {
 				pageId,
 				selector: "h1",
@@ -68,7 +68,7 @@ describe("Content Gadgets", () => {
 		});
 
 		it("should return error for non-existent page", async () => {
-			const gadget = new GetPageContent(manager);
+			const gadget = new GetFullPageContent(manager);
 			const result = await testGadget(gadget, { pageId: "p999" });
 
 			expect(result.error).toBeUndefined();

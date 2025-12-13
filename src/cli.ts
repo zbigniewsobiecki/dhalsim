@@ -20,7 +20,7 @@ import {
 	GoBack,
 	GoForward,
 	Reload,
-	GetPageContent,
+	GetFullPageContent,
 	Screenshot,
 	Click,
 	ClickAndNavigate,
@@ -125,7 +125,7 @@ This is your source of truth for what's on screen. It contains:
 ## CRITICAL Rules
 1. Use pageId "p1" which is ALREADY OPEN. Do NOT use NewPage unless you need multiple tabs.
 2. ONLY use selectors exactly as shown in <CurrentBrowserState>
-3. NEVER guess or construct selectors - if it's not listed, use GetPageContent to find text content
+3. NEVER guess or construct selectors - if it's not listed, use GetFullPageContent to find text content
 
 ## Cookie Banners & Overlays
 Use DismissOverlays FIRST when you encounter cookie consent popups or blocking overlays.
@@ -135,7 +135,7 @@ It handles common patterns automatically. Only try manual clicking if DismissOve
 - Navigation: Navigate (go to URL), ClickAndNavigate (click + wait), GoBack, GoForward
 - Forms: FillForm (multiple fields + submit), FillPinCode (2FA codes)
 - Interaction: Click, Fill, Type, Select, Check, Hover, Scroll, DismissOverlays
-- Content: GetPageContent (batch read with selectors array), Screenshot
+- Content: GetFullPageContent (batch read with selectors array), Screenshot
 - Pages: NewPage (only for new tabs), ClosePage, ListPages
 - Waiting: WaitForElement, WaitForNavigation, Wait
 - User input: RequestUserAssistance (captchas, 2FA)
@@ -145,7 +145,7 @@ It handles common patterns automatically. Only try manual clicking if DismissOve
 - Cookie banner: DismissOverlays → then continue
 - Login: FillForm with selectors FROM <CurrentBrowserState>
 - Dropdown: Click to open → check MENUITEMS in next state → Click option
-- Read data: GetPageContent with selectors array`;
+- Read data: GetFullPageContent with selectors array`;
 
 
 async function main() {
@@ -185,7 +185,7 @@ async function main() {
 				new GoBack(manager),
 				new GoForward(manager),
 				new Reload(manager),
-				new GetPageContent(manager),
+				new GetFullPageContent(manager),
 				new Screenshot(manager),
 				new Click(manager),
 				new ClickAndNavigate(manager),

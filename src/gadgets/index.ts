@@ -1,5 +1,5 @@
 // Content extraction
-export { GetPageContent, Screenshot } from "./content";
+export { GetFullPageContent, Screenshot } from "./content";
 // Interactions
 export {
 	Check,

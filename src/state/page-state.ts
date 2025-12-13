@@ -146,7 +146,7 @@ export class PageStateScanner {
 			text = text.replace(/\s+/g, " ").trim();
 
 			if (this.config.maxContentLength > 0 && text.length > this.config.maxContentLength) {
-				text = `${text.slice(0, this.config.maxContentLength)}...`;
+				text = `${text.slice(0, this.config.maxContentLength)}... [truncated - use GetFullPageContent for full text]`;
 			}
 
 			return text;
@@ -405,7 +405,7 @@ export class PageStateScanner {
 				lines.push(`  ${el.selector}${textStr}`);
 			}
 			if (hiddenCount > 0) {
-				lines.push(`  [${hiddenCount} more links hidden]`);
+				lines.push(`  [${hiddenCount} more links hidden - use GetFullPageContent for complete data]`);
 			}
 		}
 

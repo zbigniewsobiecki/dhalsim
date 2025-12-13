@@ -28,9 +28,9 @@ async function resizeIfNeeded(buffer: Buffer): Promise<Buffer> {
 	return sharp(buffer).resize(newWidth, newHeight).png().toBuffer();
 }
 
-export class GetPageContent extends Gadget({
+export class GetFullPageContent extends Gadget({
 	description:
-		"Gets the visible text content of a page or specific element(s). Use 'selectors' array to query multiple elements at once (more efficient than multiple calls).",
+		"Gets the full visible text content of a page or specific element(s) with no truncation. Use 'selectors' array to query multiple elements at once.",
 	schema: z.object({
 		pageId: z.string().describe("Page ID"),
 		selector: z
@@ -40,19 +40,17 @@ export class GetPageContent extends Gadget({
 		selectors: z
 			.array(z.string())
 			.optional()
-			.describe(
-				"Array of CSS selectors to query multiple elements at once. More efficient than multiple GetPageContent calls.",
-			),
+			.describe("Array of CSS selectors to query multiple elements at once."),
 	}),
 	examples: [
 		{
 			params: { pageId: "p1" },
-			output: '{"text":"Hello World\\nWelcome to our site...","truncated":false}',
+			output: '{"text":"Hello World\\nWelcome to our site..."}',
 			comment: "Get all text from page",
 		},
 		{
 			params: { pageId: "p1", selector: "h1" },
-			output: '{"text":"Hello World","truncated":false}',
+			output: '{"text":"Hello World"}',
 			comment: "Get text from h1 element",
 		},
 		{
@@ -84,12 +82,6 @@ export class GetPageContent extends Gadget({
 						}
 						let text = (await element.textContent()) || "";
 						text = text.replace(/\s+/g, " ").trim();
-
-						// Truncate individual results to reasonable size
-						const MAX_INDIVIDUAL = 10000;
-						if (text.length > MAX_INDIVIDUAL) {
-							text = `${text.slice(0, MAX_INDIVIDUAL)}...`;
-						}
 						results.push({ text });
 					} catch (error) {
 						const message = error instanceof Error ? error.message : String(error);
@@ -115,14 +107,7 @@ export class GetPageContent extends Gadget({
 			// Normalize whitespace
 			text = text.replace(/\s+/g, " ").trim();
 
-			// Truncate if too long
-			const MAX_LENGTH = 50000;
-			const truncated = text.length > MAX_LENGTH;
-			if (truncated) {
-				text = text.slice(0, MAX_LENGTH);
-			}
-
-			return JSON.stringify({ text, truncated });
+			return JSON.stringify({ text });
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
 			return JSON.stringify({ error: message });
