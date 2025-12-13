@@ -43,7 +43,7 @@ import {
 
 interface CLIOptions {
 	model: string;
-	headless: boolean;
+	headed?: boolean;
 	maxIterations: number;
 	verbose: boolean;
 	logLlmRequests?: boolean;
@@ -158,8 +158,7 @@ async function main() {
 		.version("0.1.0")
 		.argument("[task]", "Natural language task to perform")
 		.option("-m, --model <model>", "Model to use", "sonnet")
-		.option("--headless", "Run browser in headless mode", true)
-		.option("--no-headless", "Run browser in visible mode")
+		.option("--headed", "Run browser in visible mode (default: headless)")
 		.option("--max-iterations <n>", "Maximum agent iterations", "50")
 		.option("-v, --verbose", "Show detailed gadget results", false)
 		.option("--log-llm-requests", "Save LLM requests/responses to ~/.llmist/logs/requests/")
@@ -174,7 +173,7 @@ async function main() {
 			// Auto-start browser for this session
 			console.error(chalk.dim("Starting browser..."));
 			const { pageId } = await manager.startBrowser({
-				headless: options.headless,
+				headless: !options.headed,
 			});
 			console.error(chalk.dim(`Browser ready (page: ${pageId})`));
 
@@ -219,7 +218,7 @@ async function main() {
 			process.on("SIGTERM", cleanup);
 
 			console.error(chalk.blue(`Task: ${task}`));
-			console.error(chalk.dim(`Model: ${options.model} | Headless: ${options.headless} | Max iterations: ${options.maxIterations}`));
+			console.error(chalk.dim(`Model: ${options.model} | Headed: ${options.headed || false} | Max iterations: ${options.maxIterations}`));
 			console.error(chalk.dim("─".repeat(50)));
 
 			// Set up LLM request/response logging
