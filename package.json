@@ -8,6 +8,30 @@
 	"bin": {
 		"webasto": "dist/cli.js"
 	},
+	"llmist": {
+		"gadgets": "./dist/gadgets/index.js",
+		"factory": "./dist/factory.js",
+		"subagents": {
+			"BrowseWeb": {
+				"entryPoint": "./dist/subagents/browse-web.js",
+				"export": "BrowseWeb",
+				"description": "Browse websites and accomplish tasks autonomously",
+				"uses": ["Navigate", "Click", "Screenshot", "GetFullPageContent", "Fill"],
+				"defaultModel": "sonnet",
+				"maxIterations": 15
+			}
+		},
+		"presets": {
+			"all": "*",
+			"subagent": ["BrowseWeb"],
+			"readonly": ["Navigate", "Screenshot", "GetFullPageContent", "ListPages"],
+			"minimal": ["Navigate", "Screenshot", "GetFullPageContent"]
+		},
+		"session": {
+			"factory": "getSessionManager",
+			"type": "browser"
+		}
+	},
 	"scripts": {
 		"build": "bun build src/cli.ts --outdir dist --target node --external playwright-core --external camoufox-js --external chromium-bidi --external electron && bun run build:types",
 		"build:types": "tsc --emitDeclarationOnly",
