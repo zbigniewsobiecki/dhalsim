@@ -18,17 +18,22 @@ src/
 │   └── types.ts        # BrowserInfo, PageInfo types
 ├── gadgets/
 │   ├── index.ts        # Export all gadgets
-│   ├── browser.ts      # StartBrowser, CloseBrowser, ListBrowsers
-│   ├── page.ts         # NewPage, ClosePage, ListPages
+│   ├── click.ts        # Click
+│   ├── content.ts      # GetFullPageContent, Screenshot
+│   ├── form.ts         # Type, Fill, FillForm, FillPinCode
+│   ├── keyboard.ts     # PressKey
 │   ├── navigation.ts   # Navigate, GoBack, GoForward, Reload
-│   ├── content.ts      # GetFullPageContent, Screenshot, ListInteractiveElements
-│   ├── interaction.ts  # Click, Type, Fill, PressKey, Select, Check, Hover, Scroll
+│   ├── overlays.ts     # DismissOverlays
+│   ├── page.ts         # NewPage, ClosePage, ListPages
 │   ├── script.ts       # ExecuteScript
+│   ├── scroll.ts       # Hover, Scroll
+│   ├── selection.ts    # Select, Check
+│   ├── user-input.ts   # RequestUserAssistance
 │   └── wait.ts         # WaitForElement, Wait
 ├── subagents/
 │   └── dhalsim.ts      # BrowseWeb subagent (autonomous browser agent)
 └── state/
-    └── scanner.ts      # Page state scanning utilities
+    └── page-state.ts   # Page state scanning utilities
 ```
 
 ## Key Concepts
@@ -84,13 +89,13 @@ bun run build           # Build for distribution
 
 | Category | Gadgets |
 |----------|---------|
-| Browser | StartBrowser, CloseBrowser, ListBrowsers |
 | Page | NewPage, ClosePage, ListPages |
 | Navigation | Navigate, GoBack, GoForward, Reload |
-| Content | GetPageContent, Screenshot, ListInteractiveElements |
-| Interaction | Click, Type, Fill, PressKey, Select, Check, Hover, Scroll |
+| Content | GetFullPageContent, Screenshot |
+| Interaction | Click, Type, Fill, FillForm, PressKey, Select, Check, Hover, Scroll, DismissOverlays |
 | Script | ExecuteScript |
 | Wait | WaitForElement, Wait |
+| User Input | RequestUserAssistance |
 
 ## Testing
 

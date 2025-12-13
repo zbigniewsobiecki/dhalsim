@@ -117,13 +117,13 @@ for await (const event of agent.run()) {
 
 | Category | Gadgets |
 |----------|---------|
-| Browser | StartBrowser, CloseBrowser, ListBrowsers |
 | Page | NewPage, ClosePage, ListPages |
 | Navigation | Navigate, GoBack, GoForward, Reload |
-| Content | GetFullPageContent, Screenshot, ListInteractiveElements |
-| Interaction | Click, Type, Fill, PressKey, Select, Check, Hover, Scroll |
+| Content | GetFullPageContent, Screenshot |
+| Interaction | Click, Type, Fill, FillForm, PressKey, Select, Check, Hover, Scroll, DismissOverlays |
 | Script | ExecuteScript |
 | Wait | WaitForElement, Wait |
+| User Input | RequestUserAssistance |
 
 ## Subagents
 
