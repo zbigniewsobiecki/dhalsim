@@ -23,7 +23,6 @@ import {
 	GetFullPageContent,
 	Screenshot,
 	Click,
-	ClickAndNavigate,
 	Type,
 	Fill,
 	FillForm,
@@ -136,13 +135,18 @@ Use DismissOverlays FIRST when you encounter cookie consent popups or blocking o
 It handles common patterns automatically. Only try manual clicking if DismissOverlays fails.
 
 ## Gadgets
-- Navigation: Navigate (go to URL), ClickAndNavigate (click + wait), GoBack, GoForward
+- Navigation: Navigate (go to URL), GoBack, GoForward
 - Forms: FillForm (multiple fields + submit), FillPinCode (2FA codes)
 - Interaction: Click, Fill, Type, Select, Check, Hover, Scroll, DismissOverlays
 - Content: GetFullPageContent (batch read with selectors array), Screenshot
 - Pages: NewPage (only for new tabs), ClosePage, ListPages
-- Waiting: WaitForElement, WaitForNavigation, Wait
+- Waiting: WaitForElement (wait for element to appear), WaitForNavigation (wait for page load), Wait
 - User input: RequestUserAssistance (captchas, 2FA)
+
+## Click Behavior
+Click uses Playwright's auto-waiting - it waits for elements to be actionable before clicking.
+For SPAs: Just Click, then the next action will auto-wait for new elements.
+For traditional pages: Use Click followed by WaitForNavigation if you need to wait for page load.
 
 ## Patterns
 - Start: Navigate to URL on p1 (already open)
@@ -195,7 +199,6 @@ async function main() {
 				new GetFullPageContent(manager),
 				new Screenshot(manager),
 				new Click(manager),
-				new ClickAndNavigate(manager),
 				new Type(manager),
 				new Fill(manager),
 				new FillForm(manager),

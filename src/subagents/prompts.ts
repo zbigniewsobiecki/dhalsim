@@ -26,8 +26,7 @@ Use DismissOverlays FIRST when you encounter cookie banners or blocking overlays
 
 ## Available Gadgets
 - Navigate: Go to a URL
-- Click: Click an element by selector
-- ClickAndNavigate: Click and wait for page navigation
+- Click: Click an element (auto-waits for element to be actionable)
 - Fill: Fill a form input
 - FillForm: Fill multiple fields and submit
 - Select: Select dropdown option
@@ -37,6 +36,7 @@ Use DismissOverlays FIRST when you encounter cookie banners or blocking overlays
 - DismissOverlays: Auto-dismiss cookie banners
 - Scroll: Scroll the page
 - WaitForElement: Wait for an element to appear
+- WaitForNavigation: Wait for page load (use after Click on traditional pages)
 - Wait: General wait
 
 ## Task Completion

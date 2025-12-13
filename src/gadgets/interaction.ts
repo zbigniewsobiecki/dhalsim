@@ -351,64 +351,6 @@ export class Click extends Gadget({
 	}
 }
 
-export class ClickAndNavigate extends Gadget({
-	description:
-		"Clicks an element and waits for navigation to complete. More efficient than calling Click followed by WaitForNavigation. Use for links, buttons that trigger page loads, form submits, etc.",
-	schema: z.object({
-		pageId: z.string().describe("Page ID"),
-		selector: selectorSchema.describe("CSS selector of element to click"),
-		timeout: z.number().default(30000).describe("Navigation timeout in milliseconds"),
-		force: z
-			.boolean()
-			.default(false)
-			.describe("Force click even if element is covered by another"),
-	}),
-	examples: [
-		{
-			params: { pageId: "p1", selector: "a.login-link", timeout: 30000, force: false },
-			output: '{"success":true,"url":"https://example.com/login","title":"Login Page"}',
-			comment: "Click login link and wait for page to load",
-		},
-		{
-			params: { pageId: "p1", selector: "#submit-btn", timeout: 30000, force: false },
-			output: '{"success":true,"url":"https://example.com/dashboard","title":"Dashboard"}',
-			comment: "Click submit and wait for navigation",
-		},
-	],
-}) {
-	constructor(private manager: IBrowserSessionManager) {
-		super();
-	}
-
-	async execute(params: this["params"]): Promise<string> {
-		try {
-			const page = this.manager.requirePage(params.pageId);
-			const element = await page.$(params.selector);
-
-			if (!element) {
-				return JSON.stringify({ error: `Element not found: ${params.selector}` });
-			}
-
-			await humanDelay(30, 80);
-
-			// Click and wait for navigation simultaneously (uses Playwright default 'load')
-			await Promise.all([
-				page.waitForNavigation({ timeout: params.timeout }).catch(() => {}),
-				element.click({ force: params.force }),
-			]);
-
-			return JSON.stringify({
-				success: true,
-				url: page.url(),
-				title: await page.title(),
-			});
-		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error);
-			return JSON.stringify({ error: message });
-		}
-	}
-}
-
 export class Type extends Gadget({
 	description:
 		"Types text into an input element character by character with human-like timing. Use Fill for faster input that clears the field first.",

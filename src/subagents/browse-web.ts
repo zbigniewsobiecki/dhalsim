@@ -5,7 +5,6 @@ import { PageStateScanner } from "../state";
 import {
 	Navigate,
 	Click,
-	ClickAndNavigate,
 	Fill,
 	FillForm,
 	Select,
@@ -46,9 +45,9 @@ Use this for web research, data extraction, form filling, or any web-based task.
 	schema: z.object({
 		task: z.string().describe("The task to accomplish, e.g., 'Find the price of iPhone 16 Pro' or 'Log in and check my balance'"),
 		url: z.string().url().describe("Starting URL to navigate to"),
-		maxIterations: z.number().optional().default(15).describe("Maximum number of steps before giving up"),
-		model: z.string().optional().default("sonnet").describe("Model to use for the browser agent"),
-		headless: z.boolean().optional().default(true).describe("Run browser in headless mode (no visible window)"),
+		maxIterations: z.number().optional().describe("Maximum number of steps before giving up (default: 15, configurable via CLI)"),
+		model: z.string().optional().describe("Model to use for the browser agent (default: inherit from parent agent, configurable via CLI)"),
+		headless: z.boolean().optional().describe("Run browser in headless mode (default: true, configurable via CLI)"),
 	}),
 	timeoutMs: 300000, // 5 minutes - web browsing can take time
 }) {
@@ -56,7 +55,35 @@ Use this for web research, data extraction, form filling, or any web-based task.
 		params: this["params"],
 		ctx?: ExecutionContext,
 	): Promise<{ result: string; media?: GadgetMediaOutput[] }> {
-		const { task, url, maxIterations = 15, model = "sonnet", headless = true } = params;
+		const { task, url } = params;
+
+		// Resolve configuration with priority:
+		// 1. Explicit params (runtime override)
+		// 2. Subagent config from context (CLI [subagents.BrowseWeb] or [profile.subagents.BrowseWeb])
+		// 3. Parent agent model from context (for model inheritance)
+		// 4. Hardcoded fallback defaults
+		//
+		// Note: agentConfig and subagentConfig are new ExecutionContext properties added in llmist 2.7+
+		// Using type assertion until webasto updates to the new llmist version
+		const extendedCtx = ctx as ExecutionContext & {
+			agentConfig?: { model: string; temperature?: number };
+			subagentConfig?: Record<string, Record<string, unknown>>;
+		};
+		const subagentConfig = extendedCtx?.subagentConfig?.BrowseWeb ?? {};
+		const parentModel = extendedCtx?.agentConfig?.model;
+
+		const model = params.model
+			?? (subagentConfig.model as string | undefined)
+			?? parentModel
+			?? "sonnet";
+
+		const maxIterations = params.maxIterations
+			?? (subagentConfig.maxIterations as number | undefined)
+			?? 15;
+
+		const headless = params.headless
+			?? (subagentConfig.headless as boolean | undefined)
+			?? true;
 
 		// Track collected screenshots and costs
 		const collectedMedia: GadgetMediaOutput[] = [];
@@ -80,7 +107,6 @@ Use this for web research, data extraction, form filling, or any web-based task.
 			const gadgets = [
 				new Navigate(manager),
 				new Click(manager),
-				new ClickAndNavigate(manager),
 				new Fill(manager),
 				new FillForm(manager),
 				new Select(manager),

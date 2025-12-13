@@ -8,7 +8,6 @@ import { GetFullPageContent, Screenshot } from "./gadgets/content";
 import {
 	Check,
 	Click,
-	ClickAndNavigate,
 	DismissOverlays,
 	Fill,
 	FillForm,
@@ -50,7 +49,6 @@ export interface WebastoGadgets {
 	// Interaction
 	Check: Check;
 	Click: Click;
-	ClickAndNavigate: ClickAndNavigate;
 	DismissOverlays: DismissOverlays;
 	Fill: Fill;
 	FillForm: FillForm;
@@ -109,7 +107,6 @@ export function createWebastoGadgets(config?: WebastoConfig): WebastoGadgets {
 		// Interaction
 		Check: new Check(manager),
 		Click: new Click(manager),
-		ClickAndNavigate: new ClickAndNavigate(manager),
 		DismissOverlays: new DismissOverlays(manager),
 		Fill: new Fill(manager),
 		FillForm: new FillForm(manager),

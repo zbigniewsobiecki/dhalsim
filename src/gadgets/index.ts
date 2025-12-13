@@ -4,7 +4,6 @@ export { GetFullPageContent, Screenshot } from "./content";
 export {
 	Check,
 	Click,
-	ClickAndNavigate,
 	DismissOverlays,
 	Fill,
 	FillForm,
