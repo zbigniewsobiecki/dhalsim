@@ -1,6 +1,6 @@
 import { Gadget, z, AgentBuilder, LLMist } from "llmist";
 import type { ExecutionContext, GadgetMediaOutput } from "llmist";
-import { BrowserSessionManager, getSessionManager } from "../session";
+import { BrowserSessionManager } from "../session";
 import { PageStateScanner } from "../state";
 import {
 	Navigate,
@@ -52,13 +52,6 @@ Use this for web research, data extraction, form filling, or any web-based task.
 	}),
 	timeoutMs: 300000, // 5 minutes - web browsing can take time
 }) {
-	private sessionManager: BrowserSessionManager;
-
-	constructor(sessionManager?: BrowserSessionManager) {
-		super();
-		this.sessionManager = sessionManager ?? getSessionManager();
-	}
-
 	async execute(
 		params: this["params"],
 		ctx?: ExecutionContext,
