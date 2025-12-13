@@ -119,6 +119,7 @@ This is your source of truth for what's on screen. It contains:
 - INPUTS: Form fields with their CSS selectors
 - BUTTONS: Clickable buttons with their CSS selectors
 - LINKS: Navigation links with their CSS selectors
+- CHECKBOXES: Checkbox/radio inputs, filter chips, toggle switches
 - MENUITEMS: Dropdown/menu options (only visible when a dropdown is open)
 
 ## CRITICAL Rules

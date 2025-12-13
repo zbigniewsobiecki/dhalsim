@@ -17,7 +17,7 @@ export const DEFAULT_CONFIG: FormatConfig = {
 };
 
 interface ElementInfo {
-	type: "input" | "button" | "link" | "select" | "textarea" | "menuitem";
+	type: "input" | "button" | "link" | "select" | "textarea" | "menuitem" | "checkbox";
 	selector: string;
 	text: string;
 	inputType?: string;
@@ -37,6 +37,7 @@ interface PageState {
 	selects: ElementInfo[];
 	textareas: ElementInfo[];
 	menuitems: ElementInfo[];
+	checkboxes: ElementInfo[];
 }
 
 /**
@@ -218,6 +219,7 @@ export class PageStateScanner {
 		selects: ElementInfo[];
 		textareas: ElementInfo[];
 		menuitems: ElementInfo[];
+		checkboxes: ElementInfo[];
 	}> {
 		const inputs: ElementInfo[] = [];
 		const buttons: ElementInfo[] = [];
@@ -225,14 +227,17 @@ export class PageStateScanner {
 		const selects: ElementInfo[] = [];
 		const textareas: ElementInfo[] = [];
 		const menuitems: ElementInfo[] = [];
+		const checkboxes: ElementInfo[] = [];
 
 		const typeSelectors: Record<string, string> = {
-			input: "input:not([type='button']):not([type='submit']):not([type='hidden'])",
+			input: "input:not([type='button']):not([type='submit']):not([type='hidden']):not([type='checkbox']):not([type='radio'])",
 			button: "button, input[type='button'], input[type='submit'], [role='button']",
 			link: "a[href]",
 			select: "select",
 			textarea: "textarea",
 			menuitem: "[role='option'], [role='menuitem'], [role='listbox'] li, [role='menu'] li",
+			// Checkboxes: native checkboxes, labels wrapping checkboxes, ARIA checkboxes/switches
+			checkbox: "input[type='checkbox'], input[type='radio'], label:has(input[type='checkbox']), label:has(input[type='radio']), [role='checkbox'], [role='switch']",
 		};
 
 		for (const [type, selector] of Object.entries(typeSelectors)) {
@@ -266,6 +271,9 @@ export class PageStateScanner {
 							case "menuitem":
 								menuitems.push(info);
 								break;
+							case "checkbox":
+								checkboxes.push(info);
+								break;
 						}
 					} catch {
 						// Element may have detached, skip
@@ -276,7 +284,7 @@ export class PageStateScanner {
 			}
 		}
 
-		return { inputs, buttons, links, selects, textareas, menuitems };
+		return { inputs, buttons, links, selects, textareas, menuitems, checkboxes };
 	}
 
 	/**
@@ -412,6 +420,15 @@ export class PageStateScanner {
 			lines.push("");
 			lines.push("MENUITEMS:");
 			for (const el of state.menuitems) {
+				const textStr = el.text ? ` "${el.text}"` : "";
+				lines.push(`  ${el.selector}${textStr}`);
+			}
+		}
+
+		if (state.checkboxes.length > 0) {
+			lines.push("");
+			lines.push("CHECKBOXES:");
+			for (const el of state.checkboxes) {
 				const textStr = el.text ? ` "${el.text}"` : "";
 				lines.push(`  ${el.selector}${textStr}`);
 			}
