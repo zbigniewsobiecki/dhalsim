@@ -296,7 +296,20 @@ export class PageStateScanner {
 			link: "a[href]",
 			select: "select",
 			textarea: "textarea",
-			menuitem: "[role='option'], [role='menuitem'], [role='listbox'] li, [role='menu'] li",
+			menuitem: [
+				// ARIA-based menus
+				"[role='option']",
+				"[role='menuitem']",
+				"[role='listbox'] li",
+				"[role='menu'] li",
+				// Custom dropdown patterns (Bootstrap, common conventions)
+				".dropdown-menu > *",
+				".dropdown-item",
+				"[class*='dropdown'] li",
+				"[class*='menu-item']",
+				"ul[class*='dropdown'] > li",
+				"div[class*='dropdown'] > *",
+			].join(", "),
 			// Checkboxes: native checkboxes, labels wrapping checkboxes, ARIA checkboxes/switches
 			checkbox: "input[type='checkbox'], input[type='radio'], label:has(input[type='checkbox']), label:has(input[type='radio']), [role='checkbox'], [role='switch']",
 		};
