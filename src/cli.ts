@@ -49,6 +49,66 @@ interface CLIOptions {
 	logLlmRequests?: boolean;
 }
 
+/**
+ * Format bytes into human-readable size
+ */
+function formatBytes(bytes: number): string {
+	if (bytes < 1024) return `${bytes}B`;
+	if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
+	return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+}
+
+/**
+ * Format parameters inline for display (key=value, ...)
+ */
+function formatParams(params: Record<string, unknown>): string {
+	const entries = Object.entries(params);
+	if (entries.length === 0) return "";
+
+	const formatted = entries
+		.slice(0, 3) // Show max 3 params
+		.map(([key, value]) => {
+			let v = String(value);
+			if (v.length > 30) v = `${v.slice(0, 27)}...`;
+			return `${chalk.dim(key)}${chalk.dim("=")}${chalk.cyan(v)}`;
+		})
+		.join(chalk.dim(", "));
+
+	const suffix = entries.length > 3 ? chalk.dim(", ...") : "";
+	return `${chalk.dim("(")}${formatted}${suffix}${chalk.dim(")")}`;
+}
+
+/**
+ * Format gadget result like llmist: ✓ Navigate(url=...) → 1.2KB 234ms
+ */
+function formatGadgetResult(
+	gadgetName: string,
+	params: Record<string, unknown>,
+	result: string | undefined,
+	error: string | undefined,
+	executionTimeMs: number,
+	verbose: boolean,
+): string {
+	const name = chalk.magenta.bold(gadgetName);
+	const paramsStr = formatParams(params);
+	const time = chalk.dim(`${Math.round(executionTimeMs)}ms`);
+
+	if (error) {
+		const errMsg = error.length > 60 ? `${error.slice(0, 57)}...` : error;
+		return `\n${chalk.red("✗")} ${name}${paramsStr} ${chalk.red("error:")} ${errMsg} ${time}`;
+	}
+
+	const outputSize = result ? formatBytes(Buffer.byteLength(result, "utf-8")) : "0B";
+	const sizeLabel = chalk.green(outputSize);
+
+	if (verbose && result) {
+		const preview = result.length > 100 ? `${result.slice(0, 97)}...` : result;
+		return `\n${chalk.green("✓")} ${name}${paramsStr} ${chalk.dim("→")} ${sizeLabel} ${time}\n${chalk.dim(preview)}`;
+	}
+
+	return `\n${chalk.green("✓")} ${name}${paramsStr} ${chalk.dim("→")} ${sizeLabel} ${time}`;
+}
+
 const SYSTEM_PROMPT = `You are a browser automation assistant controlling a web browser.
 
 ## Browser State (<CurrentBrowserState>)
@@ -230,15 +290,8 @@ async function main() {
 					if (event.type === "text") {
 						process.stdout.write(event.content);
 					} else if (event.type === "gadget_result") {
-						const { gadgetName, result, error } = event.result;
-
-						if (error) {
-							console.error(chalk.red(`\n[${gadgetName}] Error: ${error}`));
-						} else if (options.verbose) {
-							console.error(chalk.green(`\n[${gadgetName}] ${truncate(result || "", 200)}`));
-						} else {
-							console.error(chalk.dim(`\n[${gadgetName}] done`));
-						}
+						const { gadgetName, parameters, result, error, executionTimeMs } = event.result;
+						console.error(formatGadgetResult(gadgetName, parameters, result, error, executionTimeMs, options.verbose));
 					}
 				}
 			} catch (error) {
@@ -258,11 +311,6 @@ async function main() {
 		});
 
 	await program.parseAsync(process.argv);
-}
-
-function truncate(str: string, maxLen: number): string {
-	if (str.length <= maxLen) return str;
-	return `${str.slice(0, maxLen)}...`;
 }
 
 main().catch((error) => {
