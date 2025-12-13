@@ -50,6 +50,9 @@ export class Click extends Gadget({
 		},
 	],
 }) {
+	// Track last clicked selector per page to detect duplicate clicks
+	private lastClickedSelector: Map<string, string> = new Map();
+
 	constructor(private manager: IBrowserSessionManager) {
 		super();
 	}
@@ -57,6 +60,19 @@ export class Click extends Gadget({
 	async execute(params: this["params"]): Promise<string> {
 		try {
 			const page = this.manager.requirePage(params.pageId);
+
+			// Detect duplicate click on same selector (prevents dropdown toggle issues)
+			const lastSelector = this.lastClickedSelector.get(params.pageId);
+			if (lastSelector === params.selector) {
+				// Clear the tracker so a third click would work
+				this.lastClickedSelector.delete(params.pageId);
+				return JSON.stringify({
+					warning: "Same element clicked twice in a row - skipping to prevent toggle",
+					hint: "Check <CurrentBrowserState> for MENUITEMS or other changes from the first click",
+					selector: params.selector,
+				});
+			}
+
 			const locator = page.locator(params.selector);
 
 			// Check if element exists
@@ -95,6 +111,8 @@ export class Click extends Gadget({
 					});
 					// Allow async UI (dropdowns, animations) to settle before state scan
 					await page.waitForTimeout(UI_SETTLE_DELAY);
+					// Track this click to detect duplicates
+					this.lastClickedSelector.set(params.pageId, params.selector);
 					return JSON.stringify({
 						success: true,
 						elementText: text,
@@ -111,6 +129,8 @@ export class Click extends Gadget({
 						});
 						// Allow async UI (dropdowns, animations) to settle before state scan
 						await page.waitForTimeout(UI_SETTLE_DELAY);
+						// Track this click to detect duplicates
+						this.lastClickedSelector.set(params.pageId, params.selector);
 						return JSON.stringify({
 							success: true,
 							elementText: text,
@@ -130,6 +150,8 @@ export class Click extends Gadget({
 			});
 			// Allow async UI (dropdowns, animations) to settle before state scan
 			await page.waitForTimeout(UI_SETTLE_DELAY);
+			// Track this click to detect duplicates
+			this.lastClickedSelector.set(params.pageId, params.selector);
 
 			return JSON.stringify({
 				success: true,
