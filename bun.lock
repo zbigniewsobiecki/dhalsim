@@ -7,9 +7,7 @@
       "dependencies": {
         "better-sqlite3": "nounder/bun-better-sqlite3",
         "camoufox-js": "github:zbigniewsobiecki/camoufox-js#impit-fallback",
-        "chalk": "^5.6.2",
-        "commander": "^12.1.0",
-        "llmist": "^2.6.0",
+        "llmist": "^3.1.0",
         "sharp": "^0.34.5",
       },
       "devDependencies": {
@@ -311,7 +309,7 @@
 
     "color-name": ["color-name@1.1.4", "", {}, "sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA=="],
 
-    "commander": ["commander@12.1.0", "", {}, "sha512-Vw8qHK3bZM9y/P10u3Vib8o/DdkvA2OtPtZvD871QKjy74Wj1WSKFILMPRPSdUSx5RFK1arlJzEtA4PkFgnbuA=="],
+    "commander": ["commander@14.0.2", "", {}, "sha512-TywoWNNRbhoD0BXs1P3ZEScW8W5iKrnbithIl0YH+uCmBd0QpPOA8yc82DS3BIE5Ma6FnBVUsJ7wVUDz4dvOWQ=="],
 
     "core-js-pure": ["core-js-pure@3.47.0", "", {}, "sha512-BcxeDbzUrRnXGYIVAGFtcGQVNpFcUhVjr6W7F8XktvQW2iJP9e66GP6xdKotCRFlrxBvNIBrhwKteRXqMV86Nw=="],
 
@@ -477,7 +475,7 @@
 
     "lefthook-windows-x64": ["lefthook-windows-x64@1.13.6", "", { "os": "win32", "cpu": "x64" }, "sha512-mOZoM3FQh3o08M8PQ/b3IYuL5oo36D9ehczIw1dAgp1Ly+Tr4fJ96A+4SEJrQuYeRD4mex9bR7Ps56I73sBSZA=="],
 
-    "llmist": ["llmist@2.6.0", "", { "dependencies": { "@anthropic-ai/sdk": "^0.69.0", "@google/genai": "^1.27.0", "chalk": "^5.6.2", "commander": "^12.1.0", "diff": "^8.0.2", "eta": "^4.4.1", "js-toml": "^1.0.2", "js-yaml": "^4.1.0", "marked": "^15.0.12", "marked-terminal": "^7.3.0", "openai": "^6.0.0", "tiktoken": "^1.0.22", "tslog": "^4.10.2", "zod": "^4.1.12" }, "bin": { "llmist": "dist/cli.js" } }, "sha512-TYLoQ5EECU/8R9oWq/z220FP82kvGyAumSHxzmxFDG/EOWio8kPArCmn9rTGhjDhmtaB36biEW4SppydDCvhIw=="],
+    "llmist": ["llmist@3.1.0", "", { "dependencies": { "@anthropic-ai/sdk": "^0.69.0", "@google/genai": "^1.27.0", "chalk": "^5.6.2", "commander": "^12.1.0", "diff": "^8.0.2", "eta": "^4.4.1", "js-toml": "^1.0.2", "js-yaml": "^4.1.0", "marked": "^15.0.12", "marked-terminal": "^7.3.0", "openai": "^6.0.0", "tiktoken": "^1.0.22", "tslog": "^4.10.2", "zod": "^4.1.12" }, "bin": { "llmist": "dist/cli.js" } }, "sha512-kIv66e0/ACxxjiZxzAd56GPwpqZ9mTgC6DBQbBn3aZrMLhQfNRnvjKxV3k1IqZN4QopttU8q+jaFOc1mA6CGQg=="],
 
     "lodash-es": ["lodash-es@4.17.21", "", {}, "sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw=="],
 
@@ -697,9 +695,9 @@
 
     "camoufox-js/better-sqlite3": ["better-sqlite3@12.5.0", "", { "dependencies": { "bindings": "^1.5.0", "prebuild-install": "^7.1.1" } }, "sha512-WwCZ/5Diz7rsF29o27o0Gcc1Du+l7Zsv7SYtVPG0X3G/uUI1LqdxrQI7c9Hs2FWpqXXERjW9hp6g3/tH7DlVKg=="],
 
-    "camoufox-js/commander": ["commander@14.0.2", "", {}, "sha512-TywoWNNRbhoD0BXs1P3ZEScW8W5iKrnbithIl0YH+uCmBd0QpPOA8yc82DS3BIE5Ma6FnBVUsJ7wVUDz4dvOWQ=="],
-
     "cli-highlight/chalk": ["chalk@4.1.2", "", { "dependencies": { "ansi-styles": "^4.1.0", "supports-color": "^7.1.0" } }, "sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA=="],
+
+    "llmist/commander": ["commander@12.1.0", "", {}, "sha512-Vw8qHK3bZM9y/P10u3Vib8o/DdkvA2OtPtZvD871QKjy74Wj1WSKFILMPRPSdUSx5RFK1arlJzEtA4PkFgnbuA=="],
 
     "parse5-htmlparser2-tree-adapter/parse5": ["parse5@6.0.1", "", {}, "sha512-Ofn/CTFzRGTTxwpNEs9PP93gXShHcTq255nzRYSKe8AkVpZY7e1fpmTfOyoIvjP5HG7Z2ZM7VS9PPhQGW2pOpw=="],
 
