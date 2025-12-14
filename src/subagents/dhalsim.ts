@@ -123,7 +123,7 @@ Use this for web research, data extraction, form filling, or any web-based task.
 			// We track costs manually and report them to the parent via ctx.reportCost
 			const client = new LLMist();
 
-			// Build the subagent with abort signal support
+			// Build the subagent with abort signal support and automatic nested event forwarding
 			const builder = new AgentBuilder(client)
 				.withModel(model)
 				.withSystem(DHALSIM_SYSTEM_PROMPT)
@@ -155,6 +155,12 @@ Use this for web research, data extraction, form filling, or any web-based task.
 					},
 				});
 
+			// Enable automatic nested event forwarding to parent (if available)
+			// This ONE LINE replaces all manual event forwarding boilerplate!
+			if (ctx) {
+				builder.withParentContext(ctx);
+			}
+
 			// Add abort signal if available
 			if (ctx?.signal) {
 				builder.withSignal(ctx.signal);
@@ -171,17 +177,18 @@ Use this for web research, data extraction, form filling, or any web-based task.
 					break;
 				}
 
-				if (event.type === "text") {
-					// Capture the final text response
-					finalResult = event.content;
-				} else if (event.type === "gadget_result") {
+				// Events are automatically forwarded to parent via withParentContext()
+				// Just handle local processing here
+				if (event.type === "gadget_result") {
 					// Collect any screenshots from gadget results
 					if (event.result.media) {
 						for (const media of event.result.media) {
 							collectedMedia.push(media);
 						}
 					}
-					// Note: Gadget costs are tracked via onGadgetExecutionComplete hook
+				} else if (event.type === "text") {
+					// Capture the final text response
+					finalResult = event.content;
 				}
 			}
 

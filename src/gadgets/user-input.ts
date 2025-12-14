@@ -1,4 +1,4 @@
-import { Gadget, z, HumanInputException } from "llmist";
+import { Gadget, z, HumanInputRequiredException } from "llmist";
 import type { IBrowserSessionManager } from "../session";
 
 export class RequestUserAssistance extends Gadget({
@@ -32,6 +32,6 @@ export class RequestUserAssistance extends Gadget({
 		const prompt = `[${params.reason.toUpperCase()}] ${params.message}`;
 
 		// Throw HumanInputException - llmist handles the rest
-		throw new HumanInputException(prompt);
+		throw new HumanInputRequiredException(prompt);
 	}
 }

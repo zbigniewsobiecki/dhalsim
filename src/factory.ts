@@ -1,4 +1,4 @@
-import type { BaseGadget } from "llmist";
+import type { AbstractGadget } from "llmist";
 import type { IBrowserSessionManager } from "./session/types";
 import { getSessionManager } from "./session";
 
@@ -154,7 +154,7 @@ export type DhalsimPreset = "all" | "subagent" | "readonly" | "minimal";
 export function createGadgetsByPreset(
 	preset: DhalsimPreset,
 	config?: DhalsimConfig,
-): BaseGadget[] {
+): AbstractGadget[] {
 	const gadgets = createDhalsimGadgets(config);
 
 	switch (preset) {
@@ -201,9 +201,9 @@ export function createGadgetsByPreset(
 export function createGadgetsByName(
 	names: string[],
 	config?: DhalsimConfig,
-): BaseGadget[] {
+): AbstractGadget[] {
 	const allGadgets = createDhalsimGadgets(config);
-	const result: BaseGadget[] = [];
+	const result: AbstractGadget[] = [];
 
 	for (const name of names) {
 		const gadget = allGadgets[name as keyof DhalsimGadgets];
