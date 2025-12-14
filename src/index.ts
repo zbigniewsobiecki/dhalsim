@@ -2,8 +2,8 @@
 export { BrowserSessionManager, getSessionManager } from "./session";
 export type { IBrowserSessionManager } from "./session";
 
-// All gadgets
-export * from "./gadgets";
+// NOTE: Raw gadget classes are NOT exported to prevent broken instantiation
+// when llmist loads the module. Use createDhalsimGadgets() for individual gadgets.
 
 // Factory functions for dependency injection
 export {
