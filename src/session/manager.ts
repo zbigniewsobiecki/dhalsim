@@ -205,9 +205,22 @@ export class BrowserSessionManager {
 	}
 
 	async closeAll(): Promise<void> {
-		for (const [, entry] of this.browsers) {
-			await entry.browser.close();
-		}
+		const CLOSE_TIMEOUT_MS = 5000;
+
+		const closePromises = Array.from(this.browsers.values()).map(async (entry) => {
+			try {
+				await Promise.race([
+					entry.browser.close(),
+					new Promise<void>((_, reject) =>
+						setTimeout(() => reject(new Error("Browser close timeout")), CLOSE_TIMEOUT_MS),
+					),
+				]);
+			} catch {
+				// Force continue if close hangs - the process will exit anyway
+			}
+		});
+
+		await Promise.all(closePromises);
 		this.browsers.clear();
 		this.pages.clear();
 	}
