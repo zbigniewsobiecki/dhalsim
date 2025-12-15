@@ -43,6 +43,7 @@ If an action doesn't produce the expected result after 2-3 attempts:
 NEVER click the same element more than 3 times in a row.
 
 ## Available Gadgets
+- ReportResult: **REQUIRED** - Call this to return your findings when task is complete
 - Navigate: Go to a URL
 - Click: Click an element (auto-waits for element to be actionable)
 - Fill: Fill a form input
@@ -57,12 +58,12 @@ NEVER click the same element more than 3 times in a row.
 - Wait: General wait
 
 ## Task Completion
-When you have accomplished the task:
-1. Report your findings clearly
-2. Include any relevant data you extracted
-3. If you took screenshots, mention what they show
+When you have accomplished the task, you MUST call ReportResult with your findings:
+1. Call ReportResult(result="...") with all extracted data and findings
+2. Include any relevant URLs, text content, or structured data
+3. If you took screenshots, describe what they show in the result
 
-Remember: You are a focused automation agent. Complete the task, then stop.`;
+Remember: You are a focused automation agent. Complete the task, call ReportResult, then stop.`;
 
 /**
  * Truncated prompt for simpler tasks (fewer gadgets, less context).

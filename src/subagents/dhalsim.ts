@@ -19,6 +19,30 @@ import {
 import { DHALSIM_SYSTEM_PROMPT } from "./prompts";
 
 /**
+ * Internal gadget for the browser agent to report its final result.
+ * This gadget captures the result text so it can be returned to the caller.
+ */
+class ReportResult extends Gadget({
+	name: "ReportResult",
+	description:
+		"Report the final result of your task. Call this when you have completed the task to return your findings to the caller.",
+	schema: z.object({
+		result: z
+			.string()
+			.describe(
+				"Your findings to return to the caller. Include all relevant extracted data, URLs, and key information.",
+			),
+	}),
+}) {
+	result: string | null = null;
+
+	execute(params: this["params"]): string {
+		this.result = params.result;
+		return "Result reported successfully.";
+	}
+}
+
+/**
  * Dhalsim subagent - a high-level gadget that runs its own agent loop
  * to accomplish web browsing tasks autonomously.
  *
@@ -111,8 +135,12 @@ Use this for web research, data extraction, form filling, or any web-based task.
 			// Create page state scanner for context injection
 			const pageStateScanner = new PageStateScanner(manager);
 
+			// Create ReportResult gadget to capture the agent's findings
+			const reportResult = new ReportResult();
+
 			// Create gadgets with this session's manager
 			const gadgets = [
+				reportResult, // First so it's prominent in the list
 				new Navigate(manager),
 				new Click(manager),
 				new Fill(manager),
@@ -199,6 +227,10 @@ Use this for web research, data extraction, form filling, or any web-based task.
 							collectedMedia.push(media);
 						}
 					}
+					// Break early if ReportResult was called
+					if (reportResult.result !== null) {
+						break;
+					}
 				} else if (event.type === "text") {
 					// Capture the final text response
 					finalResult = event.content;
@@ -211,8 +243,12 @@ Use this for web research, data extraction, form filling, or any web-based task.
 			}
 
 			// Return result with collected media
+			// Priority: ReportResult gadget > text events > fallback message
 			return {
-				result: finalResult || "Task completed but no result text was generated.",
+				result:
+					reportResult.result ||
+					finalResult ||
+					"Task completed but no result text was generated.",
 				media: collectedMedia.length > 0 ? collectedMedia : undefined,
 			};
 		} finally {
