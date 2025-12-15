@@ -129,7 +129,12 @@ Use this for web research, data extraction, form filling, or any web-based task.
 				.withSystem(DHALSIM_SYSTEM_PROMPT)
 				.withMaxIterations(maxIterations)
 				.withGadgets(...gadgets)
-				.withTrailingMessage(() => pageStateScanner.getCachedState())
+				.withTrailingMessage((ctx) => [
+					pageStateScanner.getCachedState(),
+					"",
+					`[Iteration ${ctx.iteration + 1}/${ctx.maxIterations}]`,
+					"Think carefully: 1. What gadget invocations should we make next? 2. How do they depend on each other so we can run independent ones in parallel?",
+				].join("\n"))
 				.withHooks({
 					observers: {
 						onLLMCallReady: async () => {
