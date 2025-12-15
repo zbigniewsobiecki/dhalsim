@@ -100,6 +100,14 @@ Use this for web research, data extraction, form filling, or any web-based task.
 				url, // Navigate directly to the starting URL
 			});
 
+			// Pre-dismiss cookie banners to save an LLM call
+			const dismissOverlays = new DismissOverlays(manager);
+			try {
+				await dismissOverlays.execute({ pageId });
+			} catch {
+				// Ignore - overlay dismissal is best-effort
+			}
+
 			// Create page state scanner for context injection
 			const pageStateScanner = new PageStateScanner(manager);
 
@@ -171,7 +179,7 @@ Use this for web research, data extraction, form filling, or any web-based task.
 				builder.withSignal(ctx.signal);
 			}
 
-			const agent = builder.ask(`You are on page ${pageId} at ${url}. Complete this task: ${task}`);
+			const agent = builder.ask(`Page ${pageId} is ready at ${url}. Overlays dismissed. Take action now. Task: ${task}`);
 
 			// Run the subagent loop
 			let finalResult = "";

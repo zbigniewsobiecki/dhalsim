@@ -24,10 +24,8 @@ This is your source of truth for what's on screen. It contains:
 6. For batch extraction: GetFullPageContent returns ALL matches when a selector matches multiple elements (as "texts" array). Use this instead of querying each element separately.
 
 ## Efficient Pattern
-After Navigate, immediately:
-1. DismissOverlays (proactive - cookie banners are common)
-2. GetFullPageContent or Screenshot to understand the page
-3. Only then interact with elements
+On first call: Navigate and DismissOverlays are ALREADY done. Take action immediately.
+After any Navigate call: DismissOverlays, then interact with elements.
 
 If an action doesn't produce expected results, use GetFullPageContent to diagnose before retrying.
 
