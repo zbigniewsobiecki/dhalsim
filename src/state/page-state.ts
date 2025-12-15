@@ -88,17 +88,23 @@ export class PageStateScanner {
 
 	/**
 	 * Refresh the cached state (call after state-changing operations).
+	 * Uses proper locking to avoid concurrent scans and handles errors correctly.
 	 */
 	async refreshState(): Promise<void> {
-		// Avoid concurrent scans
+		// If a scan is already in progress, just wait for it
 		if (this.scanPromise) {
 			await this.scanPromise;
 			return;
 		}
 
+		// Start a new scan with proper cleanup in finally block
 		this.scanPromise = this.doRefresh();
-		await this.scanPromise;
-		this.scanPromise = null;
+		try {
+			await this.scanPromise;
+		} finally {
+			// Always clear the promise, even if doRefresh throws
+			this.scanPromise = null;
+		}
 	}
 
 	private async doRefresh(): Promise<void> {
@@ -158,10 +164,10 @@ export class PageStateScanner {
 			}
 		};
 
-		const [url, title, content, structure, elements, dataAttributes, collapsedSections, selectOptions] =
+		const [url, title] = await Promise.all([page.url(), page.title()]);
+
+		const [content, structure, elements, dataAttributes, collapsedSections, selectOptions] =
 			await Promise.all([
-				page.url(),
-				page.title(),
 				safeCall(() => this.getContentSummary(page), "[Error reading content]", "content"),
 				safeCall(() => this.getStructure(page), "", "structure"),
 				safeCall(
@@ -282,6 +288,7 @@ export class PageStateScanner {
 
 	/**
 	 * Get all interactive elements.
+	 * Processes all selector types in parallel for better performance.
 	 */
 	private async getInteractiveElements(page: Page): Promise<{
 		inputs: ElementInfo[];
@@ -292,14 +299,6 @@ export class PageStateScanner {
 		menuitems: ElementInfo[];
 		checkboxes: ElementInfo[];
 	}> {
-		const inputs: ElementInfo[] = [];
-		const buttons: ElementInfo[] = [];
-		const links: ElementInfo[] = [];
-		const selects: ElementInfo[] = [];
-		const textareas: ElementInfo[] = [];
-		const menuitems: ElementInfo[] = [];
-		const checkboxes: ElementInfo[] = [];
-
 		const typeSelectors: Record<string, string> = {
 			input: "input:not([type='button']):not([type='submit']):not([type='hidden']):not([type='checkbox']):not([type='radio'])",
 			button: "button, input[type='button'], input[type='submit'], [role='button']",
@@ -324,49 +323,44 @@ export class PageStateScanner {
 			checkbox: "input[type='checkbox'], input[type='radio'], label:has(input[type='checkbox']), label:has(input[type='radio']), [role='checkbox'], [role='switch']",
 		};
 
-		for (const [type, selector] of Object.entries(typeSelectors)) {
+		// Process all selector types in parallel for better performance
+		const processType = async (type: string, selector: string): Promise<ElementInfo[]> => {
+			const results: ElementInfo[] = [];
 			try {
 				const els = await page.$$(selector);
 
-				for (const el of els) {
+				// Process elements with Promise.all for parallelism
+				const elementPromises = els.map(async (el) => {
 					try {
 						const isVisible = await el.isVisible();
-						if (!isVisible) continue;
-
-						const info = await this.extractElementInfo(el, type as ElementInfo["type"]);
-						if (!info) continue;
-
-						switch (type) {
-							case "input":
-								inputs.push(info);
-								break;
-							case "button":
-								buttons.push(info);
-								break;
-							case "link":
-								links.push(info);
-								break;
-							case "select":
-								selects.push(info);
-								break;
-							case "textarea":
-								textareas.push(info);
-								break;
-							case "menuitem":
-								menuitems.push(info);
-								break;
-							case "checkbox":
-								checkboxes.push(info);
-								break;
-						}
+						if (!isVisible) return null;
+						return await this.extractElementInfo(el, type as ElementInfo["type"]);
 					} catch {
 						// Element may have detached, skip
+						return null;
 					}
+				});
+
+				const infos = await Promise.all(elementPromises);
+				for (const info of infos) {
+					if (info) results.push(info);
 				}
 			} catch {
-				// Selector failed, skip
+				// Selector failed, return empty
 			}
-		}
+			return results;
+		};
+
+		// Run all type scans in parallel
+		const [inputs, buttons, links, selects, textareas, menuitems, checkboxes] = await Promise.all([
+			processType("input", typeSelectors.input),
+			processType("button", typeSelectors.button),
+			processType("link", typeSelectors.link),
+			processType("select", typeSelectors.select),
+			processType("textarea", typeSelectors.textarea),
+			processType("menuitem", typeSelectors.menuitem),
+			processType("checkbox", typeSelectors.checkbox),
+		]);
 
 		return { inputs, buttons, links, selects, textareas, menuitems, checkboxes };
 	}
