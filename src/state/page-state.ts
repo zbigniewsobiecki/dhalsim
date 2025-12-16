@@ -462,7 +462,8 @@ export class PageStateScanner {
 
 			const textStr = el.text ? ` "${el.text.slice(0, 60)}${el.text.length > 60 ? "..." : ""}"` : "";
 			const typeStr = el.inputType ? ` [${el.inputType}]` : "";
-			lines.push(`  ${displaySelector}${typeStr}${textStr}`);
+			const hrefStr = el.href ? ` -> ${el.href}` : "";
+			lines.push(`  ${displaySelector}${typeStr}${textStr}${hrefStr}`);
 		}
 
 		// Show hidden count

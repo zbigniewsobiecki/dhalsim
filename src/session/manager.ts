@@ -209,14 +209,23 @@ export class BrowserSessionManager {
 
 		const closePromises = Array.from(this.browsers.values()).map(async (entry) => {
 			try {
-				await Promise.race([
-					entry.browser.close(),
-					new Promise<void>((_, reject) =>
-						setTimeout(() => reject(new Error("Browser close timeout")), CLOSE_TIMEOUT_MS),
-					),
-				]);
+				// Close context first - browser.close() is like "pulling the power cord"
+				// and won't properly clean up contexts
+				// See: https://github.com/microsoft/playwright/issues/15163
+				await entry.context.close();
 			} catch {
-				// Force continue if close hangs - the process will exit anyway
+				// Context may already be closed
+			}
+
+			try {
+				const closePromise = entry.browser.close();
+				const timeoutPromise = new Promise<never>((_, reject) =>
+					setTimeout(() => reject(new Error("Browser close timeout")), CLOSE_TIMEOUT_MS),
+				);
+
+				await Promise.race([closePromise, timeoutPromise]);
+			} catch {
+				// Browser close failed or timed out - continue anyway
 			}
 		});
 
