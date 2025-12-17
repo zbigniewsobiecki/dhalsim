@@ -1,4 +1,4 @@
-import { Gadget, z, AgentBuilder, LLMist } from "llmist";
+import { Gadget, z, AgentBuilder, LLMist, resolveModel, getModelId } from "llmist";
 import type { ExecutionContext, GadgetMediaOutput } from "llmist";
 import { BrowserSessionManager } from "../session";
 import { PageStateScanner } from "../state";
@@ -178,13 +178,25 @@ Use this for web research, data extraction, form filling, or any web-based task.
 							await pageStateScanner.refreshState();
 						},
 						onLLMCallComplete: (context) => {
-							// Track LLM costs from usage data
+							// Track LLM costs using ModelRegistry for accurate pricing
 							if (context.usage) {
-								// Estimate cost based on token usage
-								// Using approximate rates: $3/M input, $15/M output for Claude Sonnet
-								const inputCost = (context.usage.inputTokens || 0) * 0.000003;
-								const outputCost = (context.usage.outputTokens || 0) * 0.000015;
-								totalCost += inputCost + outputCost;
+								const resolvedModel = resolveModel(model, { silent: true });
+								const modelId = getModelId(resolvedModel);
+								const estimate = client.modelRegistry.estimateCost(
+									modelId,
+									context.usage.inputTokens || 0,
+									context.usage.outputTokens || 0,
+									context.usage.cachedInputTokens || 0,
+									context.usage.cacheCreationInputTokens || 0,
+								);
+								if (estimate) {
+									totalCost += estimate.totalCost;
+								} else {
+									// Fallback for unknown models: approximate rates
+									const inputCost = (context.usage.inputTokens || 0) * 0.000003;
+									const outputCost = (context.usage.outputTokens || 0) * 0.000015;
+									totalCost += inputCost + outputCost;
+								}
 							}
 						},
 						onGadgetExecutionComplete: (context) => {
