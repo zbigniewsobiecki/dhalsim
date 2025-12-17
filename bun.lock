@@ -7,7 +7,7 @@
       "dependencies": {
         "better-sqlite3": "nounder/bun-better-sqlite3",
         "camoufox-js": "github:zbigniewsobiecki/camoufox-js#impit-fallback",
-        "llmist": "^5.1.0",
+        "llmist": "latest",
         "sharp": "^0.34.5",
       },
       "devDependencies": {
@@ -475,7 +475,7 @@
 
     "lefthook-windows-x64": ["lefthook-windows-x64@1.13.6", "", { "os": "win32", "cpu": "x64" }, "sha512-mOZoM3FQh3o08M8PQ/b3IYuL5oo36D9ehczIw1dAgp1Ly+Tr4fJ96A+4SEJrQuYeRD4mex9bR7Ps56I73sBSZA=="],
 
-    "llmist": ["llmist@5.1.0", "", { "dependencies": { "@anthropic-ai/sdk": "^0.69.0", "@google/genai": "^1.27.0", "chalk": "^5.6.2", "commander": "^12.1.0", "diff": "^8.0.2", "eta": "^4.4.1", "js-toml": "^1.0.2", "js-yaml": "^4.1.0", "marked": "^15.0.12", "marked-terminal": "^7.3.0", "openai": "^6.0.0", "tiktoken": "^1.0.22", "tslog": "^4.10.2", "zod": "^4.1.12" }, "bin": { "llmist": "dist/cli.js" } }, "sha512-Epm8CbK3JRdQW8+AJaYX04feMpLPhLj2VY2ZzEjV6tdi7KjrZ7AC0ZLF16An7qWmNn+JIQHrRxH2d78UMpZTxg=="],
+    "llmist": ["llmist@6.0.0", "", { "dependencies": { "@anthropic-ai/sdk": "^0.69.0", "@google/genai": "^1.27.0", "chalk": "^5.6.2", "commander": "^12.1.0", "diff": "^8.0.2", "eta": "^4.4.1", "js-toml": "^1.0.2", "js-yaml": "^4.1.0", "marked": "^15.0.12", "marked-terminal": "^7.3.0", "openai": "^6.0.0", "tiktoken": "^1.0.22", "tslog": "^4.10.2", "zod": "^4.1.12" }, "bin": { "llmist": "dist/cli.js" } }, "sha512-GZzreRQobrcJbvHaQIJQJEcGMZKh5Y9XBM53nQZ5/MKiqFq8t5Agcm81aXKfO6LoyFY4uCyhoqnTzQ4EmCONoA=="],
 
     "lodash-es": ["lodash-es@4.17.21", "", {}, "sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw=="],
 

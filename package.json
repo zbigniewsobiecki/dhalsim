@@ -55,7 +55,7 @@
 	"dependencies": {
 		"better-sqlite3": "nounder/bun-better-sqlite3",
 		"camoufox-js": "github:zbigniewsobiecki/camoufox-js#impit-fallback",
-		"llmist": "^5.1.0",
+		"llmist": "latest",
 		"sharp": "^0.34.5"
 	},
 	"devDependencies": {
