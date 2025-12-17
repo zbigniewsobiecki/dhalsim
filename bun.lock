@@ -7,7 +7,7 @@
       "dependencies": {
         "better-sqlite3": "nounder/bun-better-sqlite3",
         "camoufox-js": "github:zbigniewsobiecki/camoufox-js#impit-fallback",
-        "llmist": "latest",
+        "llmist": "^6.1.0",
         "sharp": "^0.34.5",
       },
       "devDependencies": {
@@ -228,6 +228,10 @@
     "@types/estree": ["@types/estree@1.0.8", "", {}, "sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w=="],
 
     "@types/node": ["@types/node@20.19.26", "", { "dependencies": { "undici-types": "~6.21.0" } }, "sha512-0l6cjgF0XnihUpndDhk+nyD3exio3iKaYROSgvh/qSevPXax3L8p5DBRFjbvalnwatGgHEQn2R88y2fA3g4irg=="],
+
+    "@unblessed/core": ["@unblessed/core@1.0.0-alpha.23", "", {}, "sha512-SHGQUsUSGnO4kCQIzAijFuEe6hog3e9KYC2Cc6gZqxPeiLpwg0TXVs5PeswSO8GrkgYQyC/kVAKNGbC4ASsSEw=="],
+
+    "@unblessed/node": ["@unblessed/node@1.0.0-alpha.23", "", { "dependencies": { "@unblessed/core": "1.0.0-alpha.23" }, "peerDependencies": { "omggif": "^1.0.10", "pngjs": "^7.0.0" } }, "sha512-040TwF8h2f2LJ8lKs5ftKt/WLOaBcjKfkKtith3w6YOgm6ZcygCNJu5fDOwqpxqJtukPG5/JvIhnCmgnNORCdQ=="],
 
     "@vitest/expect": ["@vitest/expect@4.0.15", "", { "dependencies": { "@standard-schema/spec": "^1.0.0", "@types/chai": "^5.2.2", "@vitest/spy": "4.0.15", "@vitest/utils": "4.0.15", "chai": "^6.2.1", "tinyrainbow": "^3.0.3" } }, "sha512-Gfyva9/GxPAWXIWjyGDli9O+waHDC0Q0jaLdFP1qPAUUfo1FEXPXUfUkp3eZA0sSq340vPycSyOlYUeM15Ft1w=="],
 
@@ -475,7 +479,7 @@
 
     "lefthook-windows-x64": ["lefthook-windows-x64@1.13.6", "", { "os": "win32", "cpu": "x64" }, "sha512-mOZoM3FQh3o08M8PQ/b3IYuL5oo36D9ehczIw1dAgp1Ly+Tr4fJ96A+4SEJrQuYeRD4mex9bR7Ps56I73sBSZA=="],
 
-    "llmist": ["llmist@6.0.0", "", { "dependencies": { "@anthropic-ai/sdk": "^0.69.0", "@google/genai": "^1.27.0", "chalk": "^5.6.2", "commander": "^12.1.0", "diff": "^8.0.2", "eta": "^4.4.1", "js-toml": "^1.0.2", "js-yaml": "^4.1.0", "marked": "^15.0.12", "marked-terminal": "^7.3.0", "openai": "^6.0.0", "tiktoken": "^1.0.22", "tslog": "^4.10.2", "zod": "^4.1.12" }, "bin": { "llmist": "dist/cli.js" } }, "sha512-GZzreRQobrcJbvHaQIJQJEcGMZKh5Y9XBM53nQZ5/MKiqFq8t5Agcm81aXKfO6LoyFY4uCyhoqnTzQ4EmCONoA=="],
+    "llmist": ["llmist@6.1.0", "", { "dependencies": { "@anthropic-ai/sdk": "^0.69.0", "@google/genai": "^1.27.0", "@unblessed/node": "^1.0.0-alpha.23", "chalk": "^5.6.2", "commander": "^12.1.0", "diff": "^8.0.2", "eta": "^4.4.1", "js-toml": "^1.0.2", "js-yaml": "^4.1.0", "marked": "^15.0.12", "marked-terminal": "^7.3.0", "openai": "^6.0.0", "tiktoken": "^1.0.22", "tslog": "^4.10.2", "zod": "^4.1.12" }, "bin": { "llmist": "dist/cli.js" } }, "sha512-25BC9JtN4dK6wNchwSRRlhM3Eeeb2mBsy4odjhLjQ5Gpsafm/Qpx2NrT+NGxT4ZLm67bwGrX931KObpuRmz2JA=="],
 
     "lodash-es": ["lodash-es@4.17.21", "", {}, "sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw=="],
 
@@ -525,6 +529,8 @@
 
     "obug": ["obug@2.1.1", "", {}, "sha512-uTqF9MuPraAQ+IsnPf366RG4cP9RtUi7MLO1N3KEc+wb0a6yKpeL0lmk2IB1jY5KHPAlTc6T/JRdC/YqxHNwkQ=="],
 
+    "omggif": ["omggif@1.0.10", "", {}, "sha512-LMJTtvgc/nugXj0Vcrrs68Mn2D1r0zf630VNtqtpI1FEO7e+O9FP4gqs9AcnBaSEeoHIPm28u6qgPR0oyEpGSw=="],
+
     "once": ["once@1.4.0", "", { "dependencies": { "wrappy": "1" } }, "sha512-lNaJgI+2Q5URQBkccEKHTQOPaXdUxnZZElQTZY0MFUAuaEqe1E+Nyvgdz/aIyNi6Z9MzO5dv1H8n58/GELp3+w=="],
 
     "openai": ["openai@6.10.0", "", { "peerDependencies": { "ws": "^8.18.0", "zod": "^3.25 || ^4.0" }, "optionalPeers": ["ws", "zod"], "bin": { "openai": "bin/cli" } }, "sha512-ITxOGo7rO3XRMiKA5l7tQ43iNNu+iXGFAcf2t+aWVzzqRaS0i7m1K2BhxNdaveB+5eENhO0VY1FkiZzhBk4v3A=="],
@@ -548,6 +554,8 @@
     "picomatch": ["picomatch@4.0.3", "", {}, "sha512-5gTmgEY/sqK6gFXLIsQNH19lWb4ebPDLA4SdLP7dsWkIXHWlG66oPuVvXSGFPppYZz8ZDZq0dYYrbHfBCVUb1Q=="],
 
     "playwright-core": ["playwright-core@1.57.0", "", { "bin": { "playwright-core": "cli.js" } }, "sha512-agTcKlMw/mjBWOnD6kFZttAAGHgi/Nw0CZ2o6JqWSbMlI219lAFLZZCyqByTsvVAJq5XA5H8cA6PrvBRpBWEuQ=="],
+
+    "pngjs": ["pngjs@7.0.0", "", {}, "sha512-LKWqWJRhstyYo9pGvgor/ivk2w94eSjE3RGVuzLGlr3NmD8bf7RcYGze1mNdEHRP6TRP6rMuDHk5t44hnTRyow=="],
 
     "postcss": ["postcss@8.5.6", "", { "dependencies": { "nanoid": "^3.3.11", "picocolors": "^1.1.1", "source-map-js": "^1.2.1" } }, "sha512-3Ybi1tAuwAP9s0r1UQ2J4n5Y0G05bJkpUIO0/bI9MhwmD70S5aTWbXGBwxHrelT+XM1k6dM0pk+SwNkpTRN7Pg=="],
 
