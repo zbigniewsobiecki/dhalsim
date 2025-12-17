@@ -1,4 +1,4 @@
-import { Gadget, z, AgentBuilder, LLMist, resolveModel, getModelId } from "llmist";
+import { Gadget, z, getHostExports, resolveModel, getModelId } from "llmist";
 import type { ExecutionContext, GadgetMediaOutput } from "llmist";
 import { BrowserSessionManager } from "../session";
 import { PageStateScanner } from "../state";
@@ -155,6 +155,11 @@ Use this for web research, data extraction, form filling, or any web-based task.
 				new Wait(manager),
 			];
 
+			// Get host's llmist exports to ensure proper tree sharing
+			// This avoids the "dual-package problem" where different llmist versions
+			// have incompatible classes
+			const { AgentBuilder, LLMist } = getHostExports(ctx!);
+
 			// Create a new LLMist client for the subagent
 			// We track costs manually and report them to the parent via ctx.reportCost
 			const client = new LLMist();
@@ -208,11 +213,9 @@ Use this for web research, data extraction, form filling, or any web-based task.
 					},
 				});
 
-			// Enable automatic nested event forwarding to parent (if available)
+			// Enable automatic nested event forwarding to parent
 			// This ONE LINE replaces all manual event forwarding boilerplate!
-			if (ctx) {
-				builder.withParentContext(ctx);
-			}
+			builder.withParentContext(ctx!);
 
 			// Add abort signal if available
 			if (ctx?.signal) {
