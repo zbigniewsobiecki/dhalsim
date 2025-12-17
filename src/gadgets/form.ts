@@ -1,4 +1,4 @@
-import { Gadget, z } from "llmist";
+import { Gadget, z, defaultLogger as logger } from "llmist";
 import type { IBrowserSessionManager } from "../session";
 import { humanDelay, randomDelay } from "../stealth";
 import { selectorSchema, optionalSelectorSchema } from "./selector-validator";
@@ -38,6 +38,7 @@ export class Type extends Gadget({
 	}
 
 	async execute(params: this["params"]): Promise<string> {
+		logger.debug(`[Type] pageId=${params.pageId} selector="${params.selector}" text="${params.text.substring(0, 20)}${params.text.length > 20 ? "..." : ""}"`);
 		try {
 			const page = this.manager.requirePage(params.pageId);
 			const locator = page.locator(params.selector);
@@ -96,6 +97,7 @@ export class Fill extends Gadget({
 	}
 
 	async execute(params: this["params"]): Promise<string> {
+		logger.debug(`[Fill] pageId=${params.pageId} selector="${params.selector}"`);
 		try {
 			const page = this.manager.requirePage(params.pageId);
 			const locator = page.locator(params.selector);
@@ -171,6 +173,7 @@ export class FillForm extends Gadget({
 	}
 
 	async execute(params: this["params"]): Promise<string> {
+		logger.debug(`[FillForm] pageId=${params.pageId} fields=${params.fields.length} submit=${params.submit ?? "none"}`);
 		try {
 			const page = this.manager.requirePage(params.pageId);
 			let filledCount = 0;
@@ -296,6 +299,7 @@ export class FillPinCode extends Gadget({
 	}
 
 	async execute(params: this["params"]): Promise<string> {
+		logger.debug(`[FillPinCode] pageId=${params.pageId} codeLength=${params.code.length} pattern=${params.selectorPattern ?? "auto"}`);
 		try {
 			const page = this.manager.requirePage(params.pageId);
 			const digits = params.code.split("");

@@ -1,5 +1,6 @@
 import { Camoufox, type LaunchOptions as CamoufoxOptions } from "camoufox-js";
 import type { Page } from "playwright-core";
+import { defaultLogger as logger } from "llmist";
 import type { BrowserEntry, BrowserInfo, PageEntry, PageInfo } from "./types";
 
 export interface ProxyOptions {
@@ -54,6 +55,7 @@ export class BrowserSessionManager {
 	}
 
 	async startBrowser(options: StartBrowserOptions = {}): Promise<StartBrowserResult> {
+		logger.debug(`[BrowserSessionManager] startBrowser headless=${options.headless ?? true} url=${options.url ?? "none"}`);
 		const { headless = true, url, proxy, geoip = false } = options;
 
 		const camoufoxOptions: CamoufoxOptions = {
@@ -82,6 +84,7 @@ export class BrowserSessionManager {
 
 		this.browsers.set(browserId, { browser, context, headless });
 		this.pages.set(pageId, { page, browserId });
+		logger.debug(`[BrowserSessionManager] Browser started browserId=${browserId} pageId=${pageId}`);
 
 		if (url) {
 			await page.goto(url);
@@ -95,6 +98,7 @@ export class BrowserSessionManager {
 	}
 
 	async closeBrowser(browserId: string): Promise<CloseBrowserResult> {
+		logger.debug(`[BrowserSessionManager] closeBrowser browserId=${browserId}`);
 		const entry = this.browsers.get(browserId);
 		if (!entry) {
 			throw new Error(`Browser ${browserId} not found`);
@@ -111,6 +115,7 @@ export class BrowserSessionManager {
 
 		await entry.browser.close();
 		this.browsers.delete(browserId);
+		logger.debug(`[BrowserSessionManager] Browser closed browserId=${browserId} closedPages=${closedPages.length}`);
 
 		return { success: true, closedPages };
 	}
@@ -136,6 +141,7 @@ export class BrowserSessionManager {
 	}
 
 	async newPage(browserId: string, url?: string): Promise<NewPageResult> {
+		logger.debug(`[BrowserSessionManager] newPage browserId=${browserId} url=${url ?? "none"}`);
 		const entry = this.browsers.get(browserId);
 		if (!entry) {
 			throw new Error(`Browser ${browserId} not found`);
@@ -145,6 +151,8 @@ export class BrowserSessionManager {
 		const pageId = this.nextPageId();
 
 		this.pages.set(pageId, { page, browserId });
+		logger.debug(`[BrowserSessionManager] Page created pageId=${pageId}`);
+
 
 		if (url) {
 			await page.goto(url);
@@ -159,6 +167,7 @@ export class BrowserSessionManager {
 	}
 
 	async closePage(pageId: string): Promise<ClosePageResult> {
+		logger.debug(`[BrowserSessionManager] closePage pageId=${pageId}`);
 		const entry = this.pages.get(pageId);
 		if (!entry) {
 			throw new Error(`Page ${pageId} not found`);
@@ -166,6 +175,7 @@ export class BrowserSessionManager {
 
 		await entry.page.close();
 		this.pages.delete(pageId);
+		logger.debug(`[BrowserSessionManager] Page closed pageId=${pageId}`);
 
 		return { success: true };
 	}
@@ -205,6 +215,7 @@ export class BrowserSessionManager {
 	}
 
 	async closeAll(): Promise<void> {
+		logger.debug(`[BrowserSessionManager] closeAll browsers=${this.browsers.size} pages=${this.pages.size}`);
 		const CLOSE_TIMEOUT_MS = 5000;
 
 		const closePromises = Array.from(this.browsers.values()).map(async (entry) => {

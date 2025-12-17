@@ -1,4 +1,4 @@
-import { Gadget, z } from "llmist";
+import { Gadget, z, defaultLogger as logger } from "llmist";
 import type { Page } from "playwright-core";
 import type { IBrowserSessionManager } from "../session";
 import { CMP_ACCEPT_SELECTORS, OVERLAY_SELECTORS } from "../config/cmp-selectors";
@@ -10,6 +10,7 @@ import { OVERLAY_DISMISS_DELAY, BUTTON_SCORING } from "../utils/constants";
  * Exported for use by StartBrowser's autoDismissOverlays option.
  */
 export async function dismissOverlaysOnPage(page: Page): Promise<number> {
+	logger.debug(`[DismissOverlays] Starting overlay dismissal`);
 	let dismissed = 0;
 
 	// Step 1: Try CMP-specific selectors (most reliable, language-agnostic)
@@ -17,6 +18,7 @@ export async function dismissOverlaysOnPage(page: Page): Promise<number> {
 		try {
 			const btn = await page.$(selector);
 			if (btn && (await btn.isVisible())) {
+				logger.debug(`[DismissOverlays] Found CMP selector: ${selector}`);
 				await btn.click({ force: true });
 				dismissed++;
 				await page.waitForTimeout(OVERLAY_DISMISS_DELAY);
@@ -29,6 +31,8 @@ export async function dismissOverlaysOnPage(page: Page): Promise<number> {
 
 	// Step 2: If no CMP selector worked, use heuristic to find primary button in overlay
 	if (dismissed === 0) {
+		logger.debug(`[DismissOverlays] No CMP selector matched, trying heuristic`);
+
 		const clickedButton = await page.evaluate(
 			(scoring) => {
 				// Find overlay containers by z-index + fixed position + consent-related class/id
@@ -108,12 +112,15 @@ export async function dismissOverlaysOnPage(page: Page): Promise<number> {
 		);
 
 		if (clickedButton) {
+			logger.debug(`[DismissOverlays] Heuristic found and clicked button`);
 			dismissed++;
 			await page.waitForTimeout(OVERLAY_DISMISS_DELAY);
 		}
 	}
 
 	// Step 3: Last resort - hide fixed position overlays from DOM
+	logger.debug(`[DismissOverlays] Hiding remaining fixed overlays`);
+
 	await page.evaluate(
 		(selectors) => {
 			for (const selector of selectors) {
@@ -132,6 +139,7 @@ export async function dismissOverlaysOnPage(page: Page): Promise<number> {
 		[...OVERLAY_SELECTORS],
 	);
 
+	logger.debug(`[DismissOverlays] Completed, dismissed=${dismissed}`);
 	return dismissed;
 }
 

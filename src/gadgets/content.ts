@@ -1,4 +1,4 @@
-import { Gadget, z, resultWithImage, type GadgetExecuteResultWithMedia } from "llmist";
+import { Gadget, z, resultWithImage, type GadgetExecuteResultWithMedia, defaultLogger as logger } from "llmist";
 import sharp from "sharp";
 import type { IBrowserSessionManager } from "../session";
 import { optionalSelectorSchema, selectorsArraySchema } from "./selector-validator";
@@ -81,6 +81,7 @@ export class GetFullPageContent extends Gadget({
 	}
 
 	async execute(params: this["params"]): Promise<string> {
+		logger.debug(`[GetFullPageContent] pageId=${params.pageId} selector=${params.selector ?? "none"} selectors=${params.selectors?.length ?? 0} structure=${params.structure ?? false}`);
 		try {
 			const page = this.manager.requirePage(params.pageId);
 
@@ -236,6 +237,7 @@ export class Screenshot extends Gadget({
 	}
 
 	async execute(params: this["params"]): Promise<string | GadgetExecuteResultWithMedia> {
+		logger.debug(`[Screenshot] pageId=${params.pageId} fullPage=${params.fullPage ?? false} selector=${params.selector ?? "none"}`);
 		try {
 			const page = this.manager.requirePage(params.pageId);
 

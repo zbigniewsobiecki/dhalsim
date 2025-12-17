@@ -1,4 +1,4 @@
-import { Gadget, z } from "llmist";
+import { Gadget, z, defaultLogger as logger } from "llmist";
 import type { IBrowserSessionManager } from "../session";
 import { humanDelay } from "../stealth";
 import { selectorSchema } from "./selector-validator";
@@ -58,6 +58,7 @@ export class Click extends Gadget({
 	}
 
 	async execute(params: this["params"]): Promise<string> {
+		logger.debug(`[Click] pageId=${params.pageId} selector="${params.selector}" force=${params.force}`);
 		try {
 			const page = this.manager.requirePage(params.pageId);
 
@@ -122,6 +123,7 @@ export class Click extends Gadget({
 					const msg = getErrorMessage(firstError);
 					// If intercepted by another element, auto-retry with force
 					if (msg.includes("intercepts pointer events")) {
+						logger.debug(`[Click] Element intercepted, retrying with force=true`);
 						await locator.click({
 							button: params.button,
 							clickCount: params.clickCount,

@@ -1,4 +1,4 @@
-import { Gadget, z } from "llmist";
+import { Gadget, z, defaultLogger as logger } from "llmist";
 import type { IBrowserSessionManager } from "../session";
 import { selectorSchema } from "./selector-validator";
 import { getErrorMessage, truncate } from "../utils/errors";
@@ -34,6 +34,7 @@ export class WaitForElement extends Gadget({
 	}
 
 	async execute(params: this["params"]): Promise<string> {
+		logger.debug(`[WaitForElement] pageId=${params.pageId} selector="${params.selector}" state=${params.state} timeout=${params.timeout}ms`);
 		try {
 			const page = this.manager.requirePage(params.pageId);
 
@@ -84,6 +85,7 @@ export class Wait extends Gadget({
 	}
 
 	async execute(params: this["params"]): Promise<string> {
+		logger.debug(`[Wait] ms=${params.ms}`);
 		await new Promise((resolve) => setTimeout(resolve, params.ms));
 		return JSON.stringify({ success: true, waited: params.ms });
 	}

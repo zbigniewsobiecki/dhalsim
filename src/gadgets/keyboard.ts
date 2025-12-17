@@ -1,4 +1,4 @@
-import { Gadget, z } from "llmist";
+import { Gadget, z, defaultLogger as logger } from "llmist";
 import type { IBrowserSessionManager } from "../session";
 import { getErrorMessage } from "../utils/errors";
 
@@ -29,6 +29,7 @@ export class PressKey extends Gadget({
 	}
 
 	async execute(params: this["params"]): Promise<string> {
+		logger.debug(`[PressKey] pageId=${params.pageId} key="${params.key}"`);
 		try {
 			const page = this.manager.requirePage(params.pageId);
 			await page.keyboard.press(params.key);

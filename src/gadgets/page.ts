@@ -1,4 +1,4 @@
-import { Gadget, z } from "llmist";
+import { Gadget, z, defaultLogger as logger } from "llmist";
 import type { IBrowserSessionManager } from "../session";
 import { getErrorMessage } from "../utils/errors";
 
@@ -28,8 +28,10 @@ export class NewPage extends Gadget({
 	}
 
 	async execute(params: this["params"]): Promise<string> {
+		logger.debug(`[NewPage] browserId=${params.browserId} url=${params.url ?? "none"}`);
 		try {
 			const result = await this.manager.newPage(params.browserId, params.url);
+			logger.debug(`[NewPage] Created pageId=${result.pageId}`);
 			return JSON.stringify(result);
 		} catch (error) {
 			return JSON.stringify({ error: getErrorMessage(error) });
@@ -55,6 +57,7 @@ export class ClosePage extends Gadget({
 	}
 
 	async execute(params: this["params"]): Promise<string> {
+		logger.debug(`[ClosePage] pageId=${params.pageId}`);
 		try {
 			const result = await this.manager.closePage(params.pageId);
 			return JSON.stringify(result);
@@ -88,6 +91,7 @@ export class ListPages extends Gadget({
 	}
 
 	async execute(params: this["params"]): Promise<string> {
+		logger.debug(`[ListPages] browserId=${params.browserId ?? "all"}`);
 		const pages = this.manager.listPages(params.browserId);
 		// Get titles for each page (async operation)
 		const pagesWithTitles = await Promise.all(

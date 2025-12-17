@@ -1,4 +1,4 @@
-import { Gadget, z } from "llmist";
+import { Gadget, z, defaultLogger as logger } from "llmist";
 import type { IBrowserSessionManager } from "../session";
 import { selectorSchema, optionalSelectorSchema } from "./selector-validator";
 import { getErrorMessage } from "../utils/errors";
@@ -23,6 +23,7 @@ export class Hover extends Gadget({
 	}
 
 	async execute(params: this["params"]): Promise<string> {
+		logger.debug(`[Hover] pageId=${params.pageId} selector="${params.selector}"`);
 		try {
 			const page = this.manager.requirePage(params.pageId);
 			const locator = page.locator(params.selector);
@@ -60,6 +61,7 @@ export class Scroll extends Gadget({
 	}
 
 	async execute(params: this["params"]): Promise<string> {
+		logger.debug(`[Scroll] pageId=${params.pageId} direction=${params.direction} amount=${params.amount} selector=${params.selector ?? "page"}`);
 		try {
 			const page = this.manager.requirePage(params.pageId);
 

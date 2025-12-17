@@ -1,4 +1,4 @@
-import { Gadget, z } from "llmist";
+import { Gadget, z, defaultLogger as logger } from "llmist";
 import type { IBrowserSessionManager } from "../session";
 import { getErrorMessage } from "../utils/errors";
 
@@ -26,11 +26,14 @@ export class Navigate extends Gadget({
 	}
 
 	async execute(params: this["params"]): Promise<string> {
+		logger.debug(`[Navigate] pageId=${params.pageId} url="${params.url}"`);
 		try {
 			const page = this.manager.requirePage(params.pageId);
 
 			// Skip navigation if already on the target URL (avoid wasted calls)
 			const currentUrl = page.url();
+			logger.debug(`[Navigate] currentUrl="${currentUrl}"`);
+
 			if (this.urlsMatch(currentUrl, params.url)) {
 				return JSON.stringify({
 					url: currentUrl,
@@ -92,6 +95,7 @@ export class GoBack extends Gadget({
 	}
 
 	async execute(params: this["params"]): Promise<string> {
+		logger.debug(`[GoBack] pageId=${params.pageId}`);
 		try {
 			const page = this.manager.requirePage(params.pageId);
 			const urlBefore = page.url();
@@ -145,6 +149,7 @@ export class GoForward extends Gadget({
 	}
 
 	async execute(params: this["params"]): Promise<string> {
+		logger.debug(`[GoForward] pageId=${params.pageId}`);
 		try {
 			const page = this.manager.requirePage(params.pageId);
 			const urlBefore = page.url();
@@ -192,6 +197,7 @@ export class Reload extends Gadget({
 	}
 
 	async execute(params: this["params"]): Promise<string> {
+		logger.debug(`[Reload] pageId=${params.pageId}`);
 		try {
 			const page = this.manager.requirePage(params.pageId);
 			await page.reload(); // Uses Playwright default 'load'

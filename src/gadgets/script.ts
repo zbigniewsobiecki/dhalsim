@@ -1,4 +1,4 @@
-import { Gadget, z } from "llmist";
+import { Gadget, z, defaultLogger as logger } from "llmist";
 import type { ConsoleMessage } from "playwright-core";
 import type { IBrowserSessionManager } from "../session";
 import { getErrorMessage, truncate } from "../utils/errors";
@@ -37,6 +37,7 @@ return items.length;`,
 	}
 
 	async execute(params: this["params"]): Promise<string> {
+		logger.debug(`[ExecuteScript] pageId=${params.pageId} scriptLength=${params.script.length}`);
 		const page = this.manager.requirePage(params.pageId);
 
 		// Capture console output for debugging
