@@ -1,4 +1,4 @@
-import { Gadget, z, getHostExports, resolveSubagentModel, resolveValue } from "llmist";
+import { Gadget, z, getHostExports, resolveSubagentModel, resolveValue, defaultLogger as logger } from "llmist";
 import type { ExecutionContext, GadgetMediaOutput } from "llmist";
 import { BrowserSessionManager } from "../session";
 import { PageStateScanner } from "../state";
@@ -80,6 +80,7 @@ Use this for web research, data extraction, form filling, or any web-based task.
 		ctx?: ExecutionContext,
 	): Promise<{ result: string; media?: GadgetMediaOutput[] }> {
 		const { task, url } = params;
+		logger.debug(`[BrowseWeb] Starting task="${task.slice(0, 50)}..." url="${url}"`);
 
 		// Resolve configuration using llmist's config resolver
 		// Priority: runtime params > subagent config > parent config > defaults
@@ -106,20 +107,25 @@ Use this for web research, data extraction, form filling, or any web-based task.
 
 		try {
 			// Start browser with initial page
+			logger.debug(`[BrowseWeb] Starting browser headless=${headless}...`);
 			const { pageId } = await manager.startBrowser({
 				headless,
 				url, // Navigate directly to the starting URL
 			});
+			logger.debug(`[BrowseWeb] Browser started pageId=${pageId}`);
 
 			// Pre-dismiss cookie banners to save an LLM call
+			logger.debug(`[BrowseWeb] Dismissing overlays...`);
 			const dismissOverlays = new DismissOverlays(manager);
 			try {
 				await dismissOverlays.execute({ pageId });
 			} catch {
 				// Ignore - overlay dismissal is best-effort
 			}
+			logger.debug(`[BrowseWeb] Overlays dismissed`);
 
 			// Auto-fetch initial page content to save an LLM round-trip
+			logger.debug(`[BrowseWeb] Auto-fetching page content...`);
 			const getFullPageContent = new GetFullPageContent(manager);
 			let initialPageContent: string | null = null;
 			try {
@@ -127,6 +133,7 @@ Use this for web research, data extraction, form filling, or any web-based task.
 			} catch {
 				// Ignore - initial content fetch is best-effort
 			}
+			logger.debug(`[BrowseWeb] Content fetched length=${initialPageContent?.length ?? 0}`);
 
 			// Create page state scanner for context injection
 			const pageStateScanner = new PageStateScanner(manager);
@@ -195,6 +202,7 @@ Use this for web research, data extraction, form filling, or any web-based task.
 			const agent = builder.ask(initialMessage);
 
 			// Run the subagent loop
+			logger.debug(`[BrowseWeb] Starting agent loop model=${model} maxIterations=${maxIterations}`);
 			let finalResult = "";
 
 			for await (const event of agent.run()) {
@@ -234,7 +242,9 @@ Use this for web research, data extraction, form filling, or any web-based task.
 			};
 		} finally {
 			// Always clean up the browser
+			logger.debug(`[BrowseWeb] Cleanup - closing browser`);
 			await manager.closeAll();
+			logger.debug(`[BrowseWeb] Browser closed`);
 		}
 	}
 }
