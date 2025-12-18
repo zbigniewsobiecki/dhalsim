@@ -1,4 +1,4 @@
-import { Gadget, z, getHostExports, resolveSubagentModel, resolveValue, defaultLogger as logger } from "llmist";
+import { Gadget, z, getHostExports, resolveSubagentModel, resolveValue } from "llmist";
 import type { ExecutionContext, GadgetMediaOutput } from "llmist";
 import { BrowserSessionManager } from "../session";
 import { PageStateScanner } from "../state";
@@ -80,6 +80,11 @@ Use this for web research, data extraction, form filling, or any web-based task.
 		ctx?: ExecutionContext,
 	): Promise<{ result: string; media?: GadgetMediaOutput[] }> {
 		const { task, url } = params;
+
+		// Get logger from host to ensure proper configuration (avoids dual-package problem)
+		// Note: defaultLogger not in HostExports type yet, using type assertion
+		const hostExports = getHostExports(ctx!) as { defaultLogger?: typeof console };
+		const logger = hostExports.defaultLogger ?? console;
 		logger.debug(`[BrowseWeb] Starting task="${task.slice(0, 50)}..." url="${url}"`);
 
 		// Resolve configuration using llmist's config resolver

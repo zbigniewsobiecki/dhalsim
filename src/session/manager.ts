@@ -1,5 +1,5 @@
 import { Camoufox, type LaunchOptions as CamoufoxOptions } from "camoufox-js";
-import type { Page } from "playwright-core";
+import type { Browser, Page } from "playwright-core";
 import { defaultLogger as logger } from "llmist";
 import type { BrowserEntry, BrowserInfo, PageEntry, PageInfo } from "./types";
 
@@ -58,6 +58,10 @@ export class BrowserSessionManager {
 		logger.debug(`[BrowserSessionManager] startBrowser headless=${options.headless ?? true} url=${options.url ?? "none"}`);
 		const { headless = true, url, proxy, geoip = false } = options;
 
+		const BROWSER_LAUNCH_TIMEOUT = 30000; // 30s timeout
+		const MAX_RETRIES = 2;
+		const RETRY_DELAY = 1000; // 1s between retries
+
 		const camoufoxOptions: CamoufoxOptions = {
 			headless,
 			humanize: true, // Human-like cursor movement
@@ -72,17 +76,38 @@ export class BrowserSessionManager {
 				: undefined,
 		};
 
-		// Launch Camoufox (anti-detect Firefox)
-		const browser = await Camoufox(camoufoxOptions);
+		// Launch Camoufox with timeout and retry logic
+		// This handles transient resource contention when browsers are started sequentially
+		let browser: Browser;
+		for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+			try {
+				browser = await Promise.race([
+					Camoufox(camoufoxOptions),
+					new Promise<never>((_, reject) =>
+						setTimeout(() => reject(new Error("Browser launch timeout")), BROWSER_LAUNCH_TIMEOUT),
+					),
+				]);
+				break; // Success, exit retry loop
+			} catch (error) {
+				const isTimeout = error instanceof Error && error.message.includes("timeout");
+				if (attempt < MAX_RETRIES && isTimeout) {
+					logger.debug(`[BrowserSessionManager] Browser launch timed out, retrying (${attempt + 1}/${MAX_RETRIES})...`);
+					await new Promise((r) => setTimeout(r, RETRY_DELAY));
+				} else {
+					throw error;
+				}
+			}
+		}
+
 		// Get the default context (Camoufox creates one automatically)
-		const contexts = browser.contexts();
-		const context = contexts[0] || (await browser.newContext());
+		const contexts = browser!.contexts();
+		const context = contexts[0] || (await browser!.newContext());
 		const page = context.pages()[0] || (await context.newPage());
 
 		const browserId = this.nextBrowserId();
 		const pageId = this.nextPageId();
 
-		this.browsers.set(browserId, { browser, context, headless });
+		this.browsers.set(browserId, { browser: browser!, context, headless });
 		this.pages.set(pageId, { page, browserId });
 		logger.debug(`[BrowserSessionManager] Browser started browserId=${browserId} pageId=${pageId}`);
 
