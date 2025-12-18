@@ -1,4 +1,4 @@
-import { Gadget, z, getHostExports, resolveModel, getModelId } from "llmist";
+import { Gadget, z, getHostExports, resolveSubagentModel, resolveValue } from "llmist";
 import type { ExecutionContext, GadgetMediaOutput } from "llmist";
 import { BrowserSessionManager } from "../session";
 import { PageStateScanner } from "../state";
@@ -81,37 +81,24 @@ Use this for web research, data extraction, form filling, or any web-based task.
 	): Promise<{ result: string; media?: GadgetMediaOutput[] }> {
 		const { task, url } = params;
 
-		// Resolve configuration with priority:
-		// 1. Explicit params (runtime override)
-		// 2. Subagent config from context (CLI [subagents.Dhalsim] or [profile.subagents.Dhalsim])
-		// 3. Parent agent model from context (for model inheritance)
-		// 4. Hardcoded fallback defaults
-		//
-		// Note: agentConfig and subagentConfig are new ExecutionContext properties added in llmist 2.7+
-		// Using type assertion until dhalsim updates to the new llmist version
-		const extendedCtx = ctx as ExecutionContext & {
-			agentConfig?: { model: string; temperature?: number };
-			subagentConfig?: Record<string, Record<string, unknown>>;
-		};
-		const subagentConfig = extendedCtx?.subagentConfig?.Dhalsim ?? {};
-		const parentModel = extendedCtx?.agentConfig?.model;
+		// Resolve configuration using llmist's config resolver
+		// Priority: runtime params > subagent config > parent config > defaults
+		const model = resolveSubagentModel(ctx!, "BrowseWeb", params.model, "sonnet");
 
-		const model = params.model
-			?? (subagentConfig.model as string | undefined)
-			?? parentModel
-			?? "sonnet";
+		const maxIterations = resolveValue(ctx!, "BrowseWeb", {
+			runtime: params.maxIterations,
+			subagentKey: "maxIterations",
+			defaultValue: 15,
+		});
 
-		const maxIterations = params.maxIterations
-			?? (subagentConfig.maxIterations as number | undefined)
-			?? 15;
+		const headless = resolveValue(ctx!, "BrowseWeb", {
+			runtime: params.headless,
+			subagentKey: "headless",
+			defaultValue: true,
+		});
 
-		const headless = params.headless
-			?? (subagentConfig.headless as boolean | undefined)
-			?? true;
-
-		// Track collected screenshots and costs
+		// Track collected screenshots (costs are tracked automatically via ExecutionTree)
 		const collectedMedia: GadgetMediaOutput[] = [];
-		let totalCost = 0;
 
 		// Create a fresh session manager for isolation
 		// Each Dhalsim call gets its own browser instance
@@ -130,6 +117,15 @@ Use this for web research, data extraction, form filling, or any web-based task.
 				await dismissOverlays.execute({ pageId });
 			} catch {
 				// Ignore - overlay dismissal is best-effort
+			}
+
+			// Auto-fetch initial page content to save an LLM round-trip
+			const getFullPageContent = new GetFullPageContent(manager);
+			let initialPageContent: string | null = null;
+			try {
+				initialPageContent = await getFullPageContent.execute({ pageId });
+			} catch {
+				// Ignore - initial content fetch is best-effort
 			}
 
 			// Create page state scanner for context injection
@@ -161,7 +157,7 @@ Use this for web research, data extraction, form filling, or any web-based task.
 			const { AgentBuilder, LLMist } = getHostExports(ctx!);
 
 			// Create a new LLMist client for the subagent
-			// We track costs manually and report them to the parent via ctx.reportCost
+			// Costs are tracked automatically via the shared ExecutionTree
 			const client = new LLMist();
 
 			// Build the subagent with abort signal support and automatic nested event forwarding
@@ -170,10 +166,10 @@ Use this for web research, data extraction, form filling, or any web-based task.
 				.withSystem(DHALSIM_SYSTEM_PROMPT)
 				.withMaxIterations(maxIterations)
 				.withGadgets(...gadgets)
-				.withTrailingMessage((ctx) => [
+				.withTrailingMessage((trailingCtx) => [
 					pageStateScanner.getCachedState(),
 					"",
-					`[Iteration ${ctx.iteration + 1}/${ctx.maxIterations}]`,
+					`[Iteration ${trailingCtx.iteration + 1}/${trailingCtx.maxIterations}]`,
 					"Think carefully: 1. What gadget invocations should we make next? 2. How do they depend on each other so we can run independent ones in parallel?",
 				].join("\n"))
 				.withHooks({
@@ -182,47 +178,21 @@ Use this for web research, data extraction, form filling, or any web-based task.
 							// Refresh page state before each LLM call
 							await pageStateScanner.refreshState();
 						},
-						onLLMCallComplete: (context) => {
-							// Track LLM costs using ModelRegistry for accurate pricing
-							if (context.usage) {
-								const resolvedModel = resolveModel(model, { silent: true });
-								const modelId = getModelId(resolvedModel);
-								const estimate = client.modelRegistry.estimateCost(
-									modelId,
-									context.usage.inputTokens || 0,
-									context.usage.outputTokens || 0,
-									context.usage.cachedInputTokens || 0,
-									context.usage.cacheCreationInputTokens || 0,
-								);
-								if (estimate) {
-									totalCost += estimate.totalCost;
-								} else {
-									// Fallback for unknown models: approximate rates
-									const inputCost = (context.usage.inputTokens || 0) * 0.000003;
-									const outputCost = (context.usage.outputTokens || 0) * 0.000015;
-									totalCost += inputCost + outputCost;
-								}
-							}
-						},
-						onGadgetExecutionComplete: (context) => {
-							// Track gadget costs
-							if (context.cost && context.cost > 0) {
-								totalCost += context.cost;
-							}
-						},
+						// Cost tracking is automatic via ExecutionTree - no hooks needed!
 					},
 				});
 
 			// Enable automatic nested event forwarding to parent
-			// This ONE LINE replaces all manual event forwarding boilerplate!
-			builder.withParentContext(ctx!);
-
-			// Add abort signal if available
-			if (ctx?.signal) {
-				builder.withSignal(ctx.signal);
+			// withParentContext handles: tree sharing, cost tracking, and signal forwarding
+			if (ctx) {
+				builder.withParentContext(ctx);
 			}
 
-			const agent = builder.ask(`Page ${pageId} is ready at ${url}. Overlays dismissed. Take action now. Task: ${task}`);
+			const initialMessage = initialPageContent
+				? `Page ${pageId} is ready at ${url}. Overlays dismissed.\n\n<InitialPageContent>\n${initialPageContent}\n</InitialPageContent>\n\nTask: ${task}`
+				: `Page ${pageId} is ready at ${url}. Overlays dismissed. Take action now. Task: ${task}`;
+
+			const agent = builder.ask(initialMessage);
 
 			// Run the subagent loop
 			let finalResult = "";
@@ -252,12 +222,8 @@ Use this for web research, data extraction, form filling, or any web-based task.
 				}
 			}
 
-			// Report accumulated costs to parent
-			if (totalCost > 0 && ctx?.reportCost) {
-				ctx.reportCost(totalCost);
-			}
-
 			// Return result with collected media
+			// Note: costs are automatically tracked in the shared ExecutionTree via withParentContext()
 			// Priority: ReportResult gadget > text events > fallback message
 			return {
 				result:
