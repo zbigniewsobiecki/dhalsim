@@ -1,5 +1,24 @@
-import { Camoufox, type LaunchOptions as CamoufoxOptions } from "camoufox-js";
+import type { LaunchOptions as CamoufoxOptions } from "camoufox-js";
 import type { Browser, Page } from "playwright-core";
+
+// Lazy-loaded to avoid Node.js compatibility issues with better-sqlite3
+// The bun-better-sqlite3 wrapper only works in Bun runtime
+let CamoufoxModule: typeof import("camoufox-js") | null = null;
+
+async function loadCamoufox(): Promise<typeof import("camoufox-js").Camoufox> {
+	if (CamoufoxModule === null) {
+		try {
+			CamoufoxModule = await import("camoufox-js");
+		} catch {
+			throw new Error(
+				"Camoufox browser automation requires Bun runtime. " +
+					"The better-sqlite3 dependency uses Bun-specific APIs. " +
+					"For Node.js environments, use TestBrowserSessionManager instead.",
+			);
+		}
+	}
+	return CamoufoxModule.Camoufox;
+}
 import { defaultLogger } from "llmist";
 import type { BrowserEntry, BrowserInfo, PageEntry, PageInfo } from "./types";
 
@@ -89,6 +108,7 @@ export class BrowserSessionManager {
 
 		// Launch Camoufox with timeout and retry logic
 		// This handles transient resource contention when browsers are started sequentially
+		const Camoufox = await loadCamoufox();
 		let browser: Browser;
 		for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
 			try {
