@@ -1,21 +1,12 @@
 import type { LaunchOptions as CamoufoxOptions } from "camoufox-js";
 import type { Browser, Page } from "playwright-core";
 
-// Lazy-loaded to avoid Node.js compatibility issues with better-sqlite3
-// The bun-better-sqlite3 wrapper only works in Bun runtime
+// Lazy-loaded to avoid loading browser automation code until needed
 let CamoufoxModule: typeof import("camoufox-js") | null = null;
 
 async function loadCamoufox(): Promise<typeof import("camoufox-js").Camoufox> {
 	if (CamoufoxModule === null) {
-		try {
-			CamoufoxModule = await import("camoufox-js");
-		} catch {
-			throw new Error(
-				"Camoufox browser automation requires Bun runtime. " +
-					"The better-sqlite3 dependency uses Bun-specific APIs. " +
-					"For Node.js environments, use TestBrowserSessionManager instead.",
-			);
-		}
+		CamoufoxModule = await import("camoufox-js");
 	}
 	return CamoufoxModule.Camoufox;
 }

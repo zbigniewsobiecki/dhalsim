@@ -1,6 +1,12 @@
+<img src="dhalsim-icon.png" width="120" align="right" alt="dhalsim" />
+
 # dhalsim
 
-Browser automation for llmist agents using Camoufox anti-detect browser.
+[![npm version](https://img.shields.io/npm/v/dhalsim.svg)](https://www.npmjs.com/package/dhalsim)
+[![CI](https://github.com/zbigniewsobiecki/dhalsim/actions/workflows/ci.yml/badge.svg)](https://github.com/zbigniewsobiecki/dhalsim/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+Browser automation gadgets for [llmist](https://llmist.dev) agents using [Camoufox](https://camoufox.com) anti-detect browser.
 
 ## Using with llmist CLI
 
@@ -10,16 +16,16 @@ Use dhalsim gadgets directly from the command line for quick tasks and testing.
 
 ```bash
 # Use the BrowseWeb subagent
-llmist agent "go to apple.com and find iPhone 16 Pro price" -g dhalsim/BrowseWeb
+bunx @llmist/cli agent "go to apple.com and find iPhone 16 Pro price" -g dhalsim:subagent
 
 # Use all gadgets (for custom agent workflows)
-llmist agent "navigate to example.com" -g dhalsim
+bunx @llmist/cli agent "navigate to example.com" -g dhalsim
 
 # Use readonly preset
-llmist agent "take a screenshot of google.com" -g dhalsim:readonly
+bunx @llmist/cli agent "take a screenshot of google.com" -g dhalsim:readonly
 
-# Use latest dev from GitHub
-llmist agent "search google for llmist" -g git+https://github.com/zbigniewsobiecki/dhalsim.git#dev
+# Use latest dev from GitHub (with BrowseWeb subagent)
+bunx @llmist/cli agent "search google for llmist" -g git+https://github.com/zbigniewsobiecki/dhalsim.git#dev:subagent
 ```
 
 ### Configuration
@@ -55,8 +61,8 @@ model = "inherit"          # Use parent agent's model
 ```toml
 [my-research-command]
 gadgets = [
-  "dhalsim/BrowseWeb",                                        # from npm
-  "git+https://github.com/zbigniewsobiecki/dhalsim.git#dev",  # from git
+  "dhalsim:subagent",                                                  # from npm
+  "git+https://github.com/zbigniewsobiecki/dhalsim.git#dev:subagent",  # from git
 ]
 ```
 
@@ -74,15 +80,15 @@ npm install dhalsim
 bun add dhalsim
 ```
 
-### Using BrowseWeb Subagent
+### Using Dhalsim Subagent
 
 ```typescript
 import { LLMist } from 'llmist';
-import { BrowseWeb } from 'dhalsim';
+import { Dhalsim } from 'dhalsim';
 
 const result = await LLMist.createAgent()
   .withModel('sonnet')
-  .withGadgets(new BrowseWeb())
+  .withGadgets(new Dhalsim())
   .askAndCollect('Go to google.com and search for "playwright"');
 ```
 
@@ -90,10 +96,9 @@ const result = await LLMist.createAgent()
 
 ```typescript
 import { LLMist } from 'llmist';
-import { createGadgetFactory } from 'dhalsim';
+import { createGadgetsByPreset } from 'dhalsim';
 
-const factory = createGadgetFactory();
-const gadgets = factory();
+const gadgets = createGadgetsByPreset('all');
 
 const agent = LLMist.createAgent()
   .withGadgets(...gadgets)
