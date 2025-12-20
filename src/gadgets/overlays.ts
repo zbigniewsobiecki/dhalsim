@@ -24,7 +24,7 @@ export async function dismissOverlaysOnPage(page: Page): Promise<number> {
 				break; // Stop after first successful click
 			}
 		} catch {
-			// Selector not found or click failed, continue
+			logger.debug(`[DismissOverlays] CMP selector failed: ${selector}`);
 		}
 	}
 

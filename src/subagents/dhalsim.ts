@@ -1,6 +1,7 @@
 import { Gadget, z, getHostExports, resolveSubagentModel, resolveValue } from "llmist";
 import type { ExecutionContext, GadgetMediaOutput } from "llmist";
 import { BrowserSessionManager } from "../session";
+import type { IBrowserSessionManager, StartBrowserOptions, StartBrowserResult } from "../session";
 import { PageStateScanner } from "../state";
 import {
 	Navigate,
@@ -17,6 +18,25 @@ import {
 	Wait,
 } from "../gadgets";
 import { DHALSIM_SYSTEM_PROMPT } from "./prompts";
+
+/**
+ * Session manager type with the required methods for browser automation.
+ * Compatible with both BrowserSessionManager and TestBrowserSessionManager.
+ */
+export type DhalsimSessionManager = IBrowserSessionManager & {
+	startBrowser(options: StartBrowserOptions): Promise<StartBrowserResult>;
+	closeAll(): Promise<void>;
+};
+
+/**
+ * Options for configuring the Dhalsim subagent.
+ */
+export interface DhalsimOptions {
+	/** Custom session manager for Node.js compatibility or testing */
+	sessionManager?: DhalsimSessionManager;
+	/** Custom system prompt (defaults to DHALSIM_SYSTEM_PROMPT) */
+	systemPrompt?: string;
+}
 
 /**
  * Internal gadget for the browser agent to report its final result.
@@ -59,6 +79,26 @@ class ReportResult extends Gadget({
  * // The agent can now call:
  * // Dhalsim(task="Find the price of iPhone 16 Pro", url="https://apple.com")
  * ```
+ *
+ * @example
+ * ```typescript
+ * // With custom session manager for Node.js compatibility
+ * import { TestBrowserSessionManager } from "dhalsim";
+ *
+ * const dhalsim = new Dhalsim({
+ *   sessionManager: new TestBrowserSessionManager(),
+ * });
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // With minimal prompt for simpler tasks
+ * import { DHALSIM_MINIMAL_PROMPT } from "dhalsim";
+ *
+ * const dhalsim = new Dhalsim({
+ *   systemPrompt: DHALSIM_MINIMAL_PROMPT,
+ * });
+ * ```
  */
 export class Dhalsim extends Gadget({
 	name: "BrowseWeb",
@@ -75,6 +115,15 @@ Use this for web research, data extraction, form filling, or any web-based task.
 	}),
 	timeoutMs: 300000, // 5 minutes - web browsing can take time
 }) {
+	private customSessionManager?: DhalsimSessionManager;
+	private customSystemPrompt?: string;
+
+	constructor(options?: DhalsimOptions) {
+		super();
+		this.customSessionManager = options?.sessionManager;
+		this.customSystemPrompt = options?.systemPrompt;
+	}
+
 	async execute(
 		params: this["params"],
 		ctx?: ExecutionContext,
@@ -104,18 +153,30 @@ Use this for web research, data extraction, form filling, or any web-based task.
 		// Track collected screenshots (costs are tracked automatically via ExecutionTree)
 		const collectedMedia: GadgetMediaOutput[] = [];
 
-		// Create a fresh session manager for isolation
-		// Each Dhalsim call gets its own browser instance
-		const manager = new BrowserSessionManager(logger);
+		// Use custom session manager or create a fresh one for isolation
+		const manager = this.customSessionManager ?? new BrowserSessionManager(logger);
+		const isOwnedManager = !this.customSessionManager;
 
 		try {
-			// Start browser with initial page
-			logger?.debug(`[BrowseWeb] Starting browser headless=${headless}...`);
-			const { pageId } = await manager.startBrowser({
-				headless,
-				url, // Navigate directly to the starting URL
-			});
-			logger?.debug(`[BrowseWeb] Browser started pageId=${pageId}`);
+			// Start browser with initial page (only if we own the manager)
+			let pageId: string;
+			if (isOwnedManager) {
+				logger?.debug(`[BrowseWeb] Starting browser headless=${headless}...`);
+				const result = await manager.startBrowser({
+					headless,
+					url, // Navigate directly to the starting URL
+				});
+				pageId = result.pageId;
+				logger?.debug(`[BrowseWeb] Browser started pageId=${pageId}`);
+			} else {
+				// Use existing page from custom session manager
+				const pages = manager.listPages();
+				if (pages.length === 0) {
+					throw new Error("Custom session manager has no pages. Start a browser first.");
+				}
+				pageId = pages[0].id;
+				logger?.debug(`[BrowseWeb] Using existing page pageId=${pageId}`);
+			}
 
 			// Pre-dismiss cookie banners to save an LLM call
 			logger?.debug(`[BrowseWeb] Dismissing overlays...`);
@@ -173,7 +234,7 @@ Use this for web research, data extraction, form filling, or any web-based task.
 			// Build the subagent with abort signal support and automatic nested event forwarding
 			const builder = new AgentBuilder(client)
 				.withModel(model)
-				.withSystem(DHALSIM_SYSTEM_PROMPT)
+				.withSystem(this.customSystemPrompt ?? DHALSIM_SYSTEM_PROMPT)
 				.withMaxIterations(maxIterations)
 				.withGadgets(...gadgets)
 				.withTrailingMessage((trailingCtx) => [
@@ -244,10 +305,12 @@ Use this for web research, data extraction, form filling, or any web-based task.
 				media: collectedMedia.length > 0 ? collectedMedia : undefined,
 			};
 		} finally {
-			// Always clean up the browser
-			logger?.debug(`[BrowseWeb] Cleanup - closing browser`);
-			await manager.closeAll();
-			logger?.debug(`[BrowseWeb] Browser closed`);
+			// Clean up the browser only if we created it
+			if (isOwnedManager) {
+				logger?.debug(`[BrowseWeb] Cleanup - closing browser`);
+				await manager.closeAll();
+				logger?.debug(`[BrowseWeb] Browser closed`);
+			}
 		}
 	}
 }

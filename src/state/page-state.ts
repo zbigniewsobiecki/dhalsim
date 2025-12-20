@@ -1,5 +1,5 @@
 import type { Page } from "playwright-core";
-import type { BrowserSessionManager } from "../session";
+import type { IBrowserSessionManager } from "../session";
 
 export interface FormatConfig {
 	/** Max length for content summary (0 = no limit) */
@@ -74,7 +74,7 @@ export class PageStateScanner {
 	private scanPromise: Promise<void> | null = null;
 
 	constructor(
-		private manager: BrowserSessionManager,
+		private manager: IBrowserSessionManager,
 		private config: FormatConfig = DEFAULT_CONFIG,
 	) {}
 

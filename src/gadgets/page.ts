@@ -91,15 +91,24 @@ export class ListPages extends Gadget({
 
 	async execute(params: this["params"]): Promise<string> {
 		logger.debug(`[ListPages] browserId=${params.browserId ?? "all"}`);
-		const pages = this.manager.listPages(params.browserId);
-		// Get titles for each page (async operation)
-		const pagesWithTitles = await Promise.all(
-			pages.map(async (page) => {
-				const playwrightPage = this.manager.getPage(page.id);
-				const title = playwrightPage ? await playwrightPage.title() : "";
-				return { ...page, title };
-			}),
-		);
-		return JSON.stringify({ pages: pagesWithTitles });
+		try {
+			const pages = this.manager.listPages(params.browserId);
+			// Get titles for each page (async operation)
+			const pagesWithTitles = await Promise.all(
+				pages.map(async (page) => {
+					try {
+						const playwrightPage = this.manager.getPage(page.id);
+						const title = playwrightPage ? await playwrightPage.title() : "";
+						return { ...page, title };
+					} catch {
+						logger.debug(`[ListPages] Could not get title for page ${page.id}`);
+						return { ...page, title: "" };
+					}
+				}),
+			);
+			return JSON.stringify({ pages: pagesWithTitles });
+		} catch (error) {
+			return JSON.stringify({ error: getErrorMessage(error) });
+		}
 	}
 }

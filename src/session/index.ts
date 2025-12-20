@@ -6,4 +6,5 @@ export type {
 	StartBrowserResult,
 } from "./manager";
 export { BrowserSessionManager, getSessionManager, resetSessionManager } from "./manager";
+export { TestBrowserSessionManager } from "./test-manager";
 export type { BrowserEntry, BrowserInfo, IBrowserSessionManager, PageEntry, PageInfo } from "./types";

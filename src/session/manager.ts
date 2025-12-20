@@ -280,8 +280,8 @@ export class BrowserSessionManager {
 				// and won't properly clean up contexts
 				// See: https://github.com/microsoft/playwright/issues/15163
 				await entry.context.close();
-			} catch {
-				// Context may already be closed
+			} catch (error) {
+				this.logger.debug(`[BrowserSessionManager] Context close error (continuing):`, error);
 			}
 
 			try {
@@ -291,8 +291,8 @@ export class BrowserSessionManager {
 				);
 
 				await Promise.race([closePromise, timeoutPromise]);
-			} catch {
-				// Browser close failed or timed out - continue anyway
+			} catch (error) {
+				this.logger.debug(`[BrowserSessionManager] Browser close error (continuing):`, error);
 			}
 		});
 

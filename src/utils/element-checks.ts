@@ -3,6 +3,7 @@
  */
 
 import type { Locator } from "playwright-core";
+import { defaultLogger as logger } from "llmist";
 
 /**
  * Builds a base selector from element attributes.
@@ -65,7 +66,7 @@ async function gatherDisambiguationHints(
 				suggestions.push(`${baseSelector} >> nth=${i}`);
 			}
 		} catch {
-			// Element may have detached, skip
+			logger.debug(`[gatherDisambiguationHints] Element detached at index ${i}`);
 		}
 	}
 
