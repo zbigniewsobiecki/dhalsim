@@ -1,8 +1,6 @@
-import { Gadget, z, defaultLogger as logger } from "llmist";
+import { Gadget, z, defaultLogger as logger, humanDelay, randomDelay, getErrorMessage } from "llmist";
 import type { IBrowserSessionManager } from "../session";
-import { humanDelay, randomDelay } from "../stealth";
 import { selectorSchema, optionalSelectorSchema } from "./selector-validator";
-import { getErrorMessage } from "../utils/errors";
 import { checkElementExists } from "../utils/element-checks";
 import { DEFAULT_NAVIGATION_TIMEOUT, MAX_INPUTS_TO_SCAN } from "../utils/constants";
 

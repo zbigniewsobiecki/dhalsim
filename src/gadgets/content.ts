@@ -1,8 +1,7 @@
-import { Gadget, z, resultWithImage, type GadgetExecuteResultWithMedia, defaultLogger as logger } from "llmist";
+import { Gadget, z, resultWithImage, type GadgetExecuteResultWithMedia, defaultLogger as logger, getErrorMessage } from "llmist";
 import sharp from "sharp";
 import type { IBrowserSessionManager } from "../session";
 import { optionalSelectorSchema, selectorsArraySchema } from "./selector-validator";
-import { getErrorMessage } from "../utils/errors";
 import { MAX_SELECTORS_PER_QUERY } from "../utils/constants";
 
 /** Claude's max image dimension is 8000px */

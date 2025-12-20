@@ -1,6 +1,5 @@
-import { Gadget, z, defaultLogger as logger } from "llmist";
+import { Gadget, z, defaultLogger as logger, getErrorMessage } from "llmist";
 import type { IBrowserSessionManager } from "../session";
-import { getErrorMessage } from "../utils/errors";
 
 export class NewPage extends Gadget({
 	description:

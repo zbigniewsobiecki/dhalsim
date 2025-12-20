@@ -59,14 +59,15 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.3.2",
+		"@llmist/testing": ">=9.2.0",
 		"@types/node": "^20.12.7",
 		"bun-types": "^1.3.2",
 		"lefthook": "^1.6.0",
-		"llmist": ">=7.0.0",
+		"llmist": ">=9.2.0",
 		"typescript": "^5.4.5",
 		"vitest": "^4.0.15"
 	},
 	"peerDependencies": {
-		"llmist": ">=7.0.0"
+		"llmist": ">=9.2.0"
 	}
 }

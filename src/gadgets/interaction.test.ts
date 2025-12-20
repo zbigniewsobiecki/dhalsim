@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { testGadget } from "llmist/testing";
+import { testGadget } from "@llmist/testing";
 import { TestBrowserSessionManager } from "../session/test-manager";
 import { Click } from "./click";
 import { Type, Fill } from "./form";

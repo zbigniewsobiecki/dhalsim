@@ -2,7 +2,8 @@
  * Utility exports for dhalsim browser automation CLI.
  */
 
-export { getErrorMessage, truncate } from "./errors.js";
+// Re-export from llmist for backwards compatibility
+export { getErrorMessage, truncate, humanDelay, randomDelay } from "llmist";
 export {
 	ELEMENT_TEXT_MAX_LENGTH,
 	ERROR_PREVIEW_LENGTH,

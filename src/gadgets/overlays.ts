@@ -1,8 +1,7 @@
-import { Gadget, z, defaultLogger as logger } from "llmist";
+import { Gadget, z, defaultLogger as logger, getErrorMessage } from "llmist";
 import type { Page } from "playwright-core";
 import type { IBrowserSessionManager } from "../session";
 import { CMP_ACCEPT_SELECTORS, OVERLAY_SELECTORS } from "../config/cmp-selectors";
-import { getErrorMessage } from "../utils/errors";
 import { OVERLAY_DISMISS_DELAY, BUTTON_SCORING } from "../utils/constants";
 
 /**

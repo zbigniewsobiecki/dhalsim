@@ -1,7 +1,6 @@
-import { Gadget, z, defaultLogger as logger } from "llmist";
+import { Gadget, z, defaultLogger as logger, getErrorMessage, truncate } from "llmist";
 import type { IBrowserSessionManager } from "../session";
 import { selectorSchema } from "./selector-validator";
-import { getErrorMessage, truncate } from "../utils/errors";
 import { ELEMENT_TEXT_MAX_LENGTH } from "../utils/constants";
 
 export class WaitForElement extends Gadget({

@@ -1,7 +1,6 @@
-import { Gadget, z, defaultLogger as logger } from "llmist";
+import { Gadget, z, defaultLogger as logger, getErrorMessage } from "llmist";
 import type { IBrowserSessionManager } from "../session";
 import { selectorSchema } from "./selector-validator";
-import { getErrorMessage } from "../utils/errors";
 import { checkElementExists } from "../utils/element-checks";
 
 export class Select extends Gadget({
