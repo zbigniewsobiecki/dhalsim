@@ -86,7 +86,8 @@ describe("BrowseWeb auto-fetch behavior", () => {
 		});
 	});
 
-	describe("with real website (CNN)", () => {
+	// Skip in CI - this test requires network access to CNN which may be blocked or rate-limited
+	describe.skipIf(process.env.CI)("with real website (CNN)", () => {
 		let manager: TestBrowserSessionManager;
 		let pageId: string;
 
