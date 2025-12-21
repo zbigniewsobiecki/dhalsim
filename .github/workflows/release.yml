@@ -59,6 +59,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          LEFTHOOK: '0'
         run: |
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
             echo "Running in dry-run mode"
