@@ -5,7 +5,7 @@
     "": {
       "name": "dhalsim",
       "dependencies": {
-        "camoufox-js": "github:zbigniewsobiecki/camoufox-js#impit-fallback",
+        "camoufox-js": "github:zbigniewsobiecki/camoufox-js#16eb589",
         "sharp": "^0.34.5",
       },
       "devDependencies": {
@@ -293,7 +293,7 @@
 
     "callsites": ["callsites@3.1.0", "", {}, "sha512-P8BjAsXvZS+VIDUI11hHCQEv74YT67YUi5JJFNWIqL235sBmjX4+qx9Muvls5ivyNENctx46xQLQ3aTuE7ssaQ=="],
 
-    "camoufox-js": ["camoufox-js@github:zbigniewsobiecki/camoufox-js#3f17684", { "dependencies": { "adm-zip": "^0.5.16", "better-sqlite3": "^12.2.0", "commander": "^14.0.0", "fingerprint-generator": "^2.1.66", "glob": "^13.0.0", "language-tags": "^2.0.1", "maxmind": "^5.0.0", "progress": "^2.0.3", "ua-parser-js": "^2.0.2", "xml2js": "^0.6.2" }, "optionalDependencies": { "impit": "^0.7.0" }, "peerDependencies": { "playwright-core": "*" }, "bin": "dist/__main__.js" }, "zbigniewsobiecki-camoufox-js-3f17684"],
+    "camoufox-js": ["camoufox-js@github:zbigniewsobiecki/camoufox-js#16eb589", { "dependencies": { "adm-zip": "^0.5.16", "commander": "^14.0.0", "fingerprint-generator": "^2.1.66", "glob": "^13.0.0", "language-tags": "^2.0.1", "maxmind": "^5.0.0", "progress": "^2.0.3", "ua-parser-js": "^2.0.2", "xml2js": "^0.6.2" }, "optionalDependencies": { "better-sqlite3": "^11.0.0", "impit": "^0.7.0" }, "peerDependencies": { "playwright-core": "*" }, "bin": "dist/__main__.js" }, "zbigniewsobiecki-camoufox-js-16eb589"],
 
     "caniuse-lite": ["caniuse-lite@1.0.30001761", "", {}, "sha512-JF9ptu1vP2coz98+5051jZ4PwQgd2ni8A+gYSN7EA7dPKIMf0pDlSUxhdmVOaV3/fYK5uWBkgSXJaRLr4+3A6g=="],
 
@@ -706,8 +706,6 @@
     "@isaacs/cliui/strip-ansi": ["strip-ansi@7.1.2", "", { "dependencies": { "ansi-regex": "^6.0.1" } }, "sha512-gmBGslpoQJtgnMAvOVqGZpEz9dyoKTCzy2nfz/n8aIFhN/jCE/rCmcxabB6jOOHV+0WNnylOxaxBQPSvcWklhA=="],
 
     "@isaacs/cliui/wrap-ansi": ["wrap-ansi@8.1.0", "", { "dependencies": { "ansi-styles": "^6.1.0", "string-width": "^5.0.1", "strip-ansi": "^7.0.1" } }, "sha512-si7QWI6zUMq56bESFvagtmzMdGOtoxfR+Sez11Mobfc7tm+VkUckk9bW2UeffTGVUbOksxmSw0AA2gs8g71NCQ=="],
-
-    "camoufox-js/better-sqlite3": ["better-sqlite3@12.5.0", "", { "dependencies": { "bindings": "^1.5.0", "prebuild-install": "^7.1.1" } }, "sha512-WwCZ/5Diz7rsF29o27o0Gcc1Du+l7Zsv7SYtVPG0X3G/uUI1LqdxrQI7c9Hs2FWpqXXERjW9hp6g3/tH7DlVKg=="],
 
     "cli-highlight/chalk": ["chalk@4.1.2", "", { "dependencies": { "ansi-styles": "^4.1.0", "supports-color": "^7.1.0" } }, "sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA=="],
 
