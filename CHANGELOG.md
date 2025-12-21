@@ -1,3 +1,9 @@
+## [1.1.0](https://github.com/zbigniewsobiecki/dhalsim/compare/v1.0.2...v1.1.0) (2025-12-21)
+
+### Features
+
+* add postinstall script to fetch Camoufox browser ([#3](https://github.com/zbigniewsobiecki/dhalsim/issues/3)) ([8a3a8ba](https://github.com/zbigniewsobiecki/dhalsim/commit/8a3a8ba854e864a955027bbc4eb0b0bd1b7b1beb))
+
 ## [1.0.2](https://github.com/zbigniewsobiecki/dhalsim/compare/v1.0.1...v1.0.2) (2025-12-21)
 
 ### Bug Fixes
