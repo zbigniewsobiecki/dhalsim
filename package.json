@@ -1,6 +1,6 @@
 {
 	"name": "dhalsim",
-	"version": "0.1.1",
+	"version": "1.0.0",
 	"description": "Browser automation for llmist agents using Camoufox anti-detect browser",
 	"type": "module",
 	"main": "dist/index.js",
@@ -13,16 +13,33 @@
 				"entryPoint": "./dist/index.js",
 				"export": "Dhalsim",
 				"description": "Browse websites and accomplish tasks autonomously",
-				"uses": ["Navigate", "Click", "Screenshot", "GetFullPageContent", "Fill"],
+				"uses": [
+					"Navigate",
+					"Click",
+					"Screenshot",
+					"GetFullPageContent",
+					"Fill"
+				],
 				"defaultModel": "sonnet",
 				"maxIterations": 15
 			}
 		},
 		"presets": {
 			"all": "*",
-			"subagent": ["BrowseWeb"],
-			"readonly": ["Navigate", "Screenshot", "GetFullPageContent", "ListPages"],
-			"minimal": ["Navigate", "Screenshot", "GetFullPageContent"]
+			"subagent": [
+				"BrowseWeb"
+			],
+			"readonly": [
+				"Navigate",
+				"Screenshot",
+				"GetFullPageContent",
+				"ListPages"
+			],
+			"minimal": [
+				"Navigate",
+				"Screenshot",
+				"GetFullPageContent"
+			]
 		},
 		"session": {
 			"factory": "getSessionManager",
