@@ -1,3 +1,14 @@
+## [1.3.0](https://github.com/zbigniewsobiecki/dhalsim/compare/v1.2.0...v1.3.0) (2025-12-21)
+
+### Features
+
+* add GitHub ruleset templates for branch protection ([#6](https://github.com/zbigniewsobiecki/dhalsim/issues/6)) ([953dcbc](https://github.com/zbigniewsobiecki/dhalsim/commit/953dcbc3e76bb55ff2e9f83b93b93ff3b72f9469))
+* export VERSION constant ([#7](https://github.com/zbigniewsobiecki/dhalsim/issues/7)) ([15167f7](https://github.com/zbigniewsobiecki/dhalsim/commit/15167f73c492f71964b56a85b3d4c3b0acc5d340))
+
+### Bug Fixes
+
+* **ci:** fail release workflow on dev branch sync failure ([#5](https://github.com/zbigniewsobiecki/dhalsim/issues/5)) ([da2c194](https://github.com/zbigniewsobiecki/dhalsim/commit/da2c1940a95b3b4481f5729e1f326701b63a7d27))
+
 ## [1.2.0](https://github.com/zbigniewsobiecki/dhalsim/compare/v1.1.0...v1.2.0) (2025-12-21)
 
 ### Features
