@@ -16,6 +16,7 @@ import {
 	Scroll,
 	WaitForElement,
 	Wait,
+	RequestUserAssistance,
 } from "../gadgets";
 import { DHALSIM_SYSTEM_PROMPT } from "./prompts";
 
@@ -221,6 +222,7 @@ Use this for web research, data extraction, form filling, or any web-based task.
 				new Scroll(manager),
 				new WaitForElement(manager),
 				new Wait(manager),
+				new RequestUserAssistance(manager), // For 2FA, CAPTCHAs, etc.
 			];
 
 			// Get host's llmist exports to ensure proper tree sharing
@@ -258,6 +260,12 @@ Use this for web research, data extraction, form filling, or any web-based task.
 			// withParentContext handles: tree sharing, cost tracking, and signal forwarding
 			if (ctx) {
 				builder.withParentContext(ctx);
+
+				// Inherit human input capability from parent context
+				// This allows RequestUserAssistance to bubble up 2FA/CAPTCHA prompts to the CLI
+				if (ctx.requestHumanInput) {
+					builder.onHumanInput(ctx.requestHumanInput);
+				}
 			}
 
 			// Add synthetic gadget calls to show the agent what was auto-executed

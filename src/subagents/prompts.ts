@@ -56,6 +56,7 @@ NEVER click the same element more than 3 times in a row.
 - Scroll: Scroll the page
 - WaitForElement: Wait for an element to appear
 - Wait: General wait
+- RequestUserAssistance: Ask user for help with CAPTCHAs, 2FA codes, or other human-only challenges
 
 ## Task Completion
 When you have accomplished the task, you MUST call ReportResult with your findings:
