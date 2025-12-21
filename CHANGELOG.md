@@ -1,3 +1,9 @@
+## [1.2.0](https://github.com/zbigniewsobiecki/dhalsim/compare/v1.1.0...v1.2.0) (2025-12-21)
+
+### Features
+
+* **subagent:** add human input capability for 2FA/CAPTCHA handling ([8c9a14b](https://github.com/zbigniewsobiecki/dhalsim/commit/8c9a14be96924138d2ea51d03a78ef32579409ae))
+
 ## [1.1.0](https://github.com/zbigniewsobiecki/dhalsim/compare/v1.0.2...v1.1.0) (2025-12-21)
 
 ### Features
