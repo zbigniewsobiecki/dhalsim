@@ -69,13 +69,9 @@ jobs:
           fi
 
       - name: Sync dev branch
-        if: ${{ always() && github.event.inputs.dry_run != 'true' }}
-        continue-on-error: true
+        if: ${{ github.event.inputs.dry_run != 'true' }}
         run: |
           git fetch origin
-          git checkout dev || git checkout -b dev origin/dev
-          git merge origin/main --ff-only --no-edit || {
-            echo "Warning: Could not fast-forward dev to main"
-            git merge origin/main --no-edit -m "chore: sync dev with main after release [skip ci]"
-          }
+          git checkout dev
+          git merge origin/main --no-edit -m "chore: sync dev with main after release [skip ci]"
           git push origin dev
