@@ -1,3 +1,9 @@
+## [1.0.1](https://github.com/zbigniewsobiecki/dhalsim/compare/v1.0.0...v1.0.1) (2025-12-21)
+
+### Bug Fixes
+
+* **ci:** disable lefthook during npm publish in Release workflow ([0703850](https://github.com/zbigniewsobiecki/dhalsim/commit/0703850645ed58a7ffb86643db89f39f057bda20))
+
 ## 1.0.0 (2025-12-21)
 
 ### Features
