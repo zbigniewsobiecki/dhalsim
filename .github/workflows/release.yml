@@ -70,8 +70,20 @@ jobs:
 
       - name: Sync dev branch
         if: ${{ github.event.inputs.dry_run != 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           git fetch origin
-          git checkout dev
-          git merge origin/main --no-edit -m "chore: sync dev with main after release [skip ci]"
-          git push origin dev
+          # Check if dev is behind main
+          if git merge-base --is-ancestor origin/main origin/dev; then
+            echo "dev is already up to date with main"
+            exit 0
+          fi
+          # Create sync branch and PR
+          SYNC_BRANCH="sync/main-to-dev-${{ github.run_id }}"
+          git checkout -b "$SYNC_BRANCH" origin/main
+          git push origin "$SYNC_BRANCH"
+          gh pr create --base dev --head "$SYNC_BRANCH" \
+            --title "chore: sync dev with main after release [skip ci]" \
+            --body "Automated sync of release changes from main to dev branch." \
+          && gh pr merge --auto --squash
