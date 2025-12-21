@@ -181,8 +181,9 @@ Use this for web research, data extraction, form filling, or any web-based task.
 			// Pre-dismiss cookie banners to save an LLM call
 			logger?.debug(`[BrowseWeb] Dismissing overlays...`);
 			const dismissOverlays = new DismissOverlays(manager);
+			let dismissResult: string | null = null;
 			try {
-				await dismissOverlays.execute({ pageId });
+				dismissResult = await dismissOverlays.execute({ pageId });
 			} catch {
 				// Ignore - overlay dismissal is best-effort
 			}
@@ -259,11 +260,25 @@ Use this for web research, data extraction, form filling, or any web-based task.
 				builder.withParentContext(ctx);
 			}
 
-			const initialMessage = initialPageContent
-				? `Page ${pageId} is ready at ${url}. Overlays dismissed.\n\n<InitialPageContent>\n${initialPageContent}\n</InitialPageContent>\n\nTask: ${task}`
-				: `Page ${pageId} is ready at ${url}. Overlays dismissed. Take action now. Task: ${task}`;
+			// Add synthetic gadget calls to show the agent what was auto-executed
+			if (dismissResult !== null) {
+				builder.withSyntheticGadgetCall(
+					"DismissOverlays",
+					{ pageId },
+					dismissResult,
+					"auto_dismiss",
+				);
+			}
+			if (initialPageContent !== null) {
+				builder.withSyntheticGadgetCall(
+					"GetFullPageContent",
+					{ pageId },
+					initialPageContent,
+					"auto_content",
+				);
+			}
 
-			const agent = builder.ask(initialMessage);
+			const agent = builder.ask(`Page ${pageId} is ready at ${url}.\n\nTask: ${task}`);
 
 			// Run the subagent loop
 			logger?.debug(`[BrowseWeb] Starting agent loop model=${model} maxIterations=${maxIterations}`);
