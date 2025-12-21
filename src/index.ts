@@ -1,3 +1,6 @@
+// Package version
+export const VERSION = "1.2.0";
+
 // Session management
 export { BrowserSessionManager, getSessionManager, TestBrowserSessionManager } from "./session";
 export type { IBrowserSessionManager } from "./session";
