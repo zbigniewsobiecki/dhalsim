@@ -1,3 +1,9 @@
+## [1.3.2](https://github.com/zbigniewsobiecki/dhalsim/compare/v1.3.1...v1.3.2) (2025-12-22)
+
+### Bug Fixes
+
+* **deps:** add playwright-core as direct dependency ([8c24419](https://github.com/zbigniewsobiecki/dhalsim/commit/8c24419d417b5bd358ed55a2c1dfbc423c576396))
+
 ## [1.3.1](https://github.com/zbigniewsobiecki/dhalsim/compare/v1.3.0...v1.3.1) (2025-12-22)
 
 ### Bug Fixes
