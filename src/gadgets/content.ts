@@ -1,34 +1,10 @@
 import { Gadget, z, resultWithImage, type GadgetExecuteResultWithMedia, defaultLogger as logger, getErrorMessage } from "llmist";
-import sharp from "sharp";
 import type { IBrowserSessionManager } from "../session";
 import { optionalSelectorSchema, selectorsArraySchema } from "./selector-validator";
 import { MAX_SELECTORS_PER_QUERY } from "../utils/constants";
 
 /** Claude's max image dimension is 8000px */
 const MAX_IMAGE_DIMENSION = 8000;
-
-/**
- * Resize image buffer if it exceeds Claude's max dimension limit.
- * Maintains aspect ratio while fitting within MAX_IMAGE_DIMENSION.
- */
-async function resizeIfNeeded(buffer: Buffer): Promise<Buffer> {
-	const metadata = await sharp(buffer).metadata();
-	const { width, height } = metadata;
-
-	if (!width || !height) return buffer;
-
-	// Check if resizing is needed
-	if (width <= MAX_IMAGE_DIMENSION && height <= MAX_IMAGE_DIMENSION) {
-		return buffer;
-	}
-
-	// Calculate scale factor to fit within max dimensions
-	const scale = Math.min(MAX_IMAGE_DIMENSION / width, MAX_IMAGE_DIMENSION / height);
-	const newWidth = Math.round(width * scale);
-	const newHeight = Math.round(height * scale);
-
-	return sharp(buffer).resize(newWidth, newHeight).png().toBuffer();
-}
 
 export class GetFullPageContent extends Gadget({
 	description:
@@ -239,8 +215,11 @@ export class Screenshot extends Gadget({
 		logger.debug(`[Screenshot] pageId=${params.pageId} fullPage=${params.fullPage ?? false} selector=${params.selector ?? "none"}`);
 		try {
 			const page = this.manager.requirePage(params.pageId);
+			const viewport = page.viewportSize();
 
 			let buffer: Buffer;
+			let clipped = false;
+
 			if (params.selector) {
 				const locator = page.locator(params.selector);
 				const count = await locator.count();
@@ -248,17 +227,25 @@ export class Screenshot extends Gadget({
 					return JSON.stringify({ error: `Element not found: ${params.selector}` });
 				}
 				buffer = await locator.screenshot({ type: "png" });
+			} else if (params.fullPage) {
+				// For full page screenshots, clip to Claude's max dimension (8000px)
+				const scrollHeight = await page.evaluate(() => document.documentElement.scrollHeight);
+				const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+				const width = Math.min(scrollWidth, viewport?.width ?? 1280);
+
+				if (scrollHeight > MAX_IMAGE_DIMENSION) {
+					// Clip to max height
+					buffer = await page.screenshot({
+						type: "png",
+						clip: { x: 0, y: 0, width, height: MAX_IMAGE_DIMENSION },
+					});
+					clipped = true;
+				} else {
+					buffer = await page.screenshot({ type: "png", fullPage: true });
+				}
 			} else {
-				buffer = await page.screenshot({
-					type: "png",
-					fullPage: params.fullPage,
-				});
+				buffer = await page.screenshot({ type: "png" });
 			}
-
-			// Resize if exceeds Claude's max dimension (8000px)
-			buffer = await resizeIfNeeded(buffer);
-
-			const viewport = page.viewportSize();
 
 			return resultWithImage(
 				JSON.stringify({
@@ -266,6 +253,7 @@ export class Screenshot extends Gadget({
 					fullPage: params.fullPage ?? false,
 					selector: params.selector,
 					viewport,
+					...(clipped ? { clipped: true, maxHeight: MAX_IMAGE_DIMENSION } : {}),
 				}),
 				buffer,
 				{
