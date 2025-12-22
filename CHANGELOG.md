@@ -1,3 +1,9 @@
+## [1.3.4](https://github.com/zbigniewsobiecki/dhalsim/compare/v1.3.3...v1.3.4) (2025-12-22)
+
+### Bug Fixes
+
+* **deps:** update camoufox-js with memory-efficient extraction ([#14](https://github.com/zbigniewsobiecki/dhalsim/issues/14)) ([c6acd5f](https://github.com/zbigniewsobiecki/dhalsim/commit/c6acd5f38ad4ede99d4452e1b592047fc708a1e0))
+
 ## [1.3.3](https://github.com/zbigniewsobiecki/dhalsim/compare/v1.3.2...v1.3.3) (2025-12-22)
 
 ### Bug Fixes
