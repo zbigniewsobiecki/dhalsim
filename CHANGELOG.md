@@ -1,3 +1,9 @@
+## [1.3.5](https://github.com/zbigniewsobiecki/dhalsim/compare/v1.3.4...v1.3.5) (2025-12-22)
+
+### Bug Fixes
+
+* **deps:** update camoufox-js to ignore unzip unicode warnings ([#16](https://github.com/zbigniewsobiecki/dhalsim/issues/16)) ([17cbe13](https://github.com/zbigniewsobiecki/dhalsim/commit/17cbe136b27f35da0eab017b0a57d89438e96ef5))
+
 ## [1.3.4](https://github.com/zbigniewsobiecki/dhalsim/compare/v1.3.3...v1.3.4) (2025-12-22)
 
 ### Bug Fixes
