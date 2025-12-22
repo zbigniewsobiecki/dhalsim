@@ -6,6 +6,7 @@
       "name": "dhalsim",
       "dependencies": {
         "camoufox-js": "github:zbigniewsobiecki/camoufox-js#16eb589",
+        "playwright-core": "^1.57.0",
         "sharp": "^0.34.5",
       },
       "devDependencies": {
