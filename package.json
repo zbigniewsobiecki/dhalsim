@@ -56,7 +56,7 @@
 		"test": "vitest run --no-file-parallelism",
 		"precheck": "bun run lint && bun run typecheck && bun run test",
 		"prepare": "test -n \"$CI\" || lefthook install",
-		"postinstall": "test -n \"$PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD\" || node node_modules/camoufox-js/dist/__main__.js fetch"
+		"postinstall": "test -n \"$PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD\" || npx camoufox-js fetch"
 	},
 	"keywords": [
 		"browser",
