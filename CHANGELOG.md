@@ -1,3 +1,9 @@
+## [1.3.3](https://github.com/zbigniewsobiecki/dhalsim/compare/v1.3.2...v1.3.3) (2025-12-22)
+
+### Bug Fixes
+
+* **deps:** remove sharp and better-sqlite3 native dependencies ([#12](https://github.com/zbigniewsobiecki/dhalsim/issues/12)) ([98c546c](https://github.com/zbigniewsobiecki/dhalsim/commit/98c546c2272ffe2f446fa1a642d8bf35ad347540))
+
 ## [1.3.2](https://github.com/zbigniewsobiecki/dhalsim/compare/v1.3.1...v1.3.2) (2025-12-22)
 
 ### Bug Fixes
