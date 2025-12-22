@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/zbigniewsobiecki/dhalsim/compare/v1.3.0...v1.3.1) (2025-12-22)
+
+### Bug Fixes
+
+* **ci:** sync dev via PR instead of direct push ([#8](https://github.com/zbigniewsobiecki/dhalsim/issues/8)) ([feda646](https://github.com/zbigniewsobiecki/dhalsim/commit/feda646b2a875491d7e84f1d5e874fce54f4fc4b))
+* use npx for camoufox-js postinstall ([#9](https://github.com/zbigniewsobiecki/dhalsim/issues/9)) ([79f3d68](https://github.com/zbigniewsobiecki/dhalsim/commit/79f3d68ea148449afa25eafbf34ac95f7c30d918))
+
 ## [1.3.0](https://github.com/zbigniewsobiecki/dhalsim/compare/v1.2.0...v1.3.0) (2025-12-21)
 
 ### Features
