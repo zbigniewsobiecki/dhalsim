@@ -1,6 +1,6 @@
 {
 	"name": "dhalsim",
-	"version": "1.3.2",
+	"version": "1.3.4",
 	"description": "Browser automation for llmist agents using Camoufox anti-detect browser",
 	"type": "module",
 	"main": "dist/index.js",
@@ -84,7 +84,7 @@
 		"README.md"
 	],
 	"dependencies": {
-		"camoufox-js": "github:zbigniewsobiecki/camoufox-js#53e1a41",
+		"camoufox-js": "github:zbigniewsobiecki/camoufox-js#83585a4",
 		"playwright-core": "^1.57.0"
 	},
 	"devDependencies": {
