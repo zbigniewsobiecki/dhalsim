@@ -38,6 +38,7 @@ model = "sonnet"           # LLM model for the subagent (default: sonnet)
 maxIterations = 20         # Max agent loop iterations (default: 15)
 headless = true            # Run browser in headless mode (default: true)
 timeoutMs = 600000         # Overall timeout in ms (default: 300000 = 5 min, 0 = disabled)
+disableCache = false       # Disable browser cache for lower memory usage (default: false)
 ```
 
 #### Per-profile configuration
@@ -55,6 +56,15 @@ maxIterations = 30         # More iterations for deep research
 ```toml
 [subagents.BrowseWeb]
 model = "inherit"          # Use parent agent's model
+```
+
+#### Low-memory environments
+
+For resource-constrained environments (e.g., small VMs, containers), enable `disableCache` to reduce browser memory footprint:
+
+```toml
+[production.subagents.BrowseWeb]
+disableCache = true        # Reduces memory per browser instance
 ```
 
 ### Custom Commands in cli.toml

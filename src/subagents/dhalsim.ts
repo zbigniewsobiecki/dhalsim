@@ -116,6 +116,7 @@ Use this for web research, data extraction, form filling, or any web-based task.
 		model: z.string().optional().describe("Model to use for the browser agent (default: inherit from parent agent, configurable via CLI)"),
 		headless: z.boolean().optional().describe("Run browser in headless mode (default: true, configurable via CLI)"),
 		timeoutMs: z.number().optional().describe("Overall timeout in ms (default: 300000 = 5 min, 0 = disabled, configurable via CLI)"),
+		disableCache: z.boolean().optional().describe("Disable browser cache for lower memory usage (default: false, configurable via CLI)"),
 	}),
 	timeoutMs: 300000, // 5 minutes - web browsing can take time
 }) {
@@ -158,6 +159,12 @@ Use this for web research, data extraction, form filling, or any web-based task.
 			defaultValue: true,
 		});
 
+		const disableCache = resolveValue(ctx!, "BrowseWeb", {
+			runtime: params.disableCache,
+			subagentKey: "disableCache",
+			defaultValue: false,
+		});
+
 		// Track collected screenshots (costs are tracked automatically via ExecutionTree)
 		const collectedMedia: GadgetMediaOutput[] = [];
 
@@ -169,10 +176,11 @@ Use this for web research, data extraction, form filling, or any web-based task.
 			// Start browser with initial page (only if we own the manager)
 			let pageId: string;
 			if (isOwnedManager) {
-				logger?.debug(`[BrowseWeb] Starting browser headless=${headless}...`);
+				logger?.debug(`[BrowseWeb] Starting browser headless=${headless} disableCache=${disableCache}...`);
 				const result = await manager.startBrowser({
 					headless,
 					url, // Navigate directly to the starting URL
+					disableCache,
 				});
 				pageId = result.pageId;
 				logger?.debug(`[BrowseWeb] Browser started pageId=${pageId}`);
