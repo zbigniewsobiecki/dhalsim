@@ -37,6 +37,7 @@ Configure BrowseWeb subagent in `~/.llmist/cli.toml`:
 model = "sonnet"           # LLM model for the subagent (default: sonnet)
 maxIterations = 20         # Max agent loop iterations (default: 15)
 headless = true            # Run browser in headless mode (default: true)
+timeoutMs = 600000         # Overall timeout in ms (default: 300000 = 5 min, 0 = disabled)
 ```
 
 #### Per-profile configuration
@@ -90,6 +91,12 @@ const result = await LLMist.createAgent()
   .withModel('sonnet')
   .withGadgets(new Dhalsim())
   .askAndCollect('Go to google.com and search for "playwright"');
+
+// With custom timeout (10 minutes)
+const dhalsim = new Dhalsim({ timeoutMs: 600000 });
+
+// Disable timeout for debugging
+const debugDhalsim = new Dhalsim({ timeoutMs: 0 });
 ```
 
 ### Using Individual Gadgets
