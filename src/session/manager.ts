@@ -33,6 +33,8 @@ export interface StartBrowserOptions {
 	geoip?: boolean;
 	/** Disable browser cache to reduce memory usage */
 	disableCache?: boolean;
+	/** Navigation timeout in milliseconds (default: 60000) */
+	navigationTimeoutMs?: number;
 }
 
 export interface StartBrowserResult {
@@ -79,7 +81,7 @@ export class BrowserSessionManager {
 
 	async startBrowser(options: StartBrowserOptions = {}): Promise<StartBrowserResult> {
 		this.logger.debug(`[BrowserSessionManager] startBrowser headless=${options.headless ?? true} url=${options.url ?? "none"}`);
-		const { headless = true, url, proxy, geoip = false, disableCache = false } = options;
+		const { headless = true, url, proxy, geoip = false, disableCache = false, navigationTimeoutMs = 60000 } = options;
 
 		const BROWSER_LAUNCH_TIMEOUT = 30000; // 30s timeout
 		const MAX_RETRIES = 2;
@@ -138,7 +140,7 @@ export class BrowserSessionManager {
 		this.logger.debug(`[BrowserSessionManager] Browser started browserId=${browserId} pageId=${pageId}`);
 
 		if (url) {
-			await page.goto(url);
+			await page.goto(url, { timeout: navigationTimeoutMs, waitUntil: "domcontentloaded" });
 		}
 
 		return {
@@ -206,7 +208,7 @@ export class BrowserSessionManager {
 
 
 		if (url) {
-			await page.goto(url);
+			await page.goto(url, { timeout: 60000, waitUntil: "domcontentloaded" });
 		}
 
 		return {

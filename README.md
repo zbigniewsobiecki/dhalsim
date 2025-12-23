@@ -34,11 +34,12 @@ Configure BrowseWeb subagent in `~/.llmist/cli.toml`:
 
 ```toml
 [subagents.BrowseWeb]
-model = "sonnet"           # LLM model for the subagent (default: sonnet)
-maxIterations = 20         # Max agent loop iterations (default: 15)
-headless = true            # Run browser in headless mode (default: true)
-timeoutMs = 600000         # Overall timeout in ms (default: 300000 = 5 min, 0 = disabled)
-disableCache = false       # Disable browser cache for lower memory usage (default: false)
+model = "sonnet"              # LLM model for the subagent (default: sonnet)
+maxIterations = 20            # Max agent loop iterations (default: 15)
+headless = true               # Run browser in headless mode (default: true)
+timeoutMs = 600000            # Overall timeout in ms (default: 300000 = 5 min, 0 = disabled)
+disableCache = false          # Disable browser cache for lower memory usage (default: false)
+navigationTimeoutMs = 60000   # Navigation timeout in ms (default: 60000)
 ```
 
 #### Per-profile configuration
@@ -58,14 +59,22 @@ maxIterations = 30         # More iterations for deep research
 model = "inherit"          # Use parent agent's model
 ```
 
-#### Low-memory environments
+#### Production Deployment
 
-For resource-constrained environments (e.g., small VMs, containers), enable `disableCache` to reduce browser memory footprint:
+For production environments, consider the following settings:
 
 ```toml
 [production.subagents.BrowseWeb]
-disableCache = true        # Reduces memory per browser instance
+headless = true               # Always run headless in production
+disableCache = true           # Reduces memory per browser instance (~100-200MB savings)
+navigationTimeoutMs = 90000   # 90s for slow networks or heavy sites
+maxIterations = 20            # More iterations for reliability
 ```
+
+**Resource requirements:**
+- Each browser instance uses ~300-500MB RAM
+- Running multiple concurrent `BrowseWeb` calls multiplies memory usage
+- Use `disableCache = true` for environments with <1GB RAM per browser
 
 ### Custom Commands in cli.toml
 
