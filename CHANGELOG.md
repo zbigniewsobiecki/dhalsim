@@ -1,3 +1,9 @@
+## [1.5.0](https://github.com/zbigniewsobiecki/dhalsim/compare/v1.4.0...v1.5.0) (2025-12-23)
+
+### Features
+
+* add disableCache option to reduce browser memory usage ([#22](https://github.com/zbigniewsobiecki/dhalsim/issues/22)) ([f469bf9](https://github.com/zbigniewsobiecki/dhalsim/commit/f469bf9fce2eaf143593d60d38eaaf7541295b8b))
+
 ## [1.4.0](https://github.com/zbigniewsobiecki/dhalsim/compare/v1.3.5...v1.4.0) (2025-12-23)
 
 ### Features
