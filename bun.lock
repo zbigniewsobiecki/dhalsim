@@ -5,7 +5,7 @@
     "": {
       "name": "dhalsim",
       "dependencies": {
-        "camoufox-js": "github:zbigniewsobiecki/camoufox-js#53e1a41",
+        "camoufox-js": "github:zbigniewsobiecki/camoufox-js#83585a4",
         "playwright-core": "^1.57.0",
       },
       "devDependencies": {
@@ -19,7 +19,7 @@
         "bun-types": "^1.3.2",
         "conventional-changelog-conventionalcommits": "^9.1.0",
         "lefthook": "^1.6.0",
-        "llmist": ">=9.4.0",
+        "llmist": "10.0.0",
         "semantic-release": "^25.0.2",
         "typescript": "^5.4.5",
         "vitest": "^4.0.15",
@@ -318,7 +318,7 @@
 
     "callsites": ["callsites@3.1.0", "", {}, "sha512-P8BjAsXvZS+VIDUI11hHCQEv74YT67YUi5JJFNWIqL235sBmjX4+qx9Muvls5ivyNENctx46xQLQ3aTuE7ssaQ=="],
 
-    "camoufox-js": ["camoufox-js@github:zbigniewsobiecki/camoufox-js#53e1a41", { "dependencies": { "adm-zip": "^0.5.16", "commander": "^14.0.0", "fingerprint-generator": "^2.1.66", "glob": "^13.0.0", "language-tags": "^2.0.1", "maxmind": "^5.0.0", "progress": "^2.0.3", "ua-parser-js": "^2.0.2", "xml2js": "^0.6.2" }, "optionalDependencies": { "better-sqlite3": "^11.0.0", "impit": "^0.7.0" }, "peerDependencies": { "playwright-core": "*" }, "bin": "dist/__main__.js" }, "zbigniewsobiecki-camoufox-js-53e1a41"],
+    "camoufox-js": ["camoufox-js@github:zbigniewsobiecki/camoufox-js#83585a4", { "dependencies": { "adm-zip": "^0.5.16", "commander": "^14.0.0", "fingerprint-generator": "^2.1.66", "glob": "^13.0.0", "language-tags": "^2.0.1", "maxmind": "^5.0.0", "progress": "^2.0.3", "ua-parser-js": "^2.0.2", "xml2js": "^0.6.2" }, "optionalDependencies": { "better-sqlite3": "^11.0.0", "impit": "^0.7.0" }, "peerDependencies": { "playwright-core": "*" }, "bin": "dist/__main__.js" }, "zbigniewsobiecki-camoufox-js-83585a4"],
 
     "caniuse-lite": ["caniuse-lite@1.0.30001761", "", {}, "sha512-JF9ptu1vP2coz98+5051jZ4PwQgd2ni8A+gYSN7EA7dPKIMf0pDlSUxhdmVOaV3/fYK5uWBkgSXJaRLr4+3A6g=="],
 
@@ -624,7 +624,7 @@
 
     "lines-and-columns": ["lines-and-columns@1.2.4", "", {}, "sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg=="],
 
-    "llmist": ["llmist@9.4.0", "", { "dependencies": { "@anthropic-ai/sdk": "^0.69.0", "@google/genai": "^1.27.0", "chalk": "^5.6.2", "diff": "^8.0.2", "eta": "^4.4.1", "fast-deep-equal": "^3.1.3", "js-toml": "^1.0.2", "js-yaml": "^4.1.0", "marked": "^15.0.12", "marked-terminal": "^7.3.0", "openai": "^6.0.0", "p-retry": "^7.1.1", "tiktoken": "^1.0.22", "tslog": "^4.10.2", "zod": "^4.1.12" } }, "sha512-3MVbqI8eBiBST/0dNJU/sfP99Qql8Y1Z0DCOdpfiYFX5DvuHddDMeMc0I7ZYWNFr97YmNKEwCMKFqJgiUY8aNg=="],
+    "llmist": ["llmist@10.0.0", "", { "dependencies": { "@anthropic-ai/sdk": "^0.69.0", "@google/genai": "^1.27.0", "chalk": "^5.6.2", "diff": "^8.0.2", "eta": "^4.4.1", "fast-deep-equal": "^3.1.3", "js-toml": "^1.0.2", "js-yaml": "^4.1.0", "marked": "^15.0.12", "marked-terminal": "^7.3.0", "openai": "^6.0.0", "p-retry": "^7.1.1", "tiktoken": "^1.0.22", "tslog": "^4.10.2", "zod": "^4.1.12" } }, "sha512-P2tU0MXrk5F2liWAu8vMTnD2vRiYO1KNLwM13Bc/wo+QWjOEeARU2umx8UgfDvz2NyHJh6MpqQqnK9Z8e0T6Ag=="],
 
     "load-json-file": ["load-json-file@4.0.0", "", { "dependencies": { "graceful-fs": "^4.1.2", "parse-json": "^4.0.0", "pify": "^3.0.0", "strip-bom": "^3.0.0" } }, "sha512-Kx8hMakjX03tiGTLAIdJ+lL0htKnXjEZN6hk/tozf/WOuYGdZBJrZ+rCJRbVCugsjB3jMLn9746NsQIf5VjBMw=="],
 
