@@ -31,6 +31,8 @@ export interface StartBrowserOptions {
 	proxy?: ProxyOptions;
 	/** Auto-detect timezone/locale from proxy IP */
 	geoip?: boolean;
+	/** Disable browser cache to reduce memory usage */
+	disableCache?: boolean;
 }
 
 export interface StartBrowserResult {
@@ -77,7 +79,7 @@ export class BrowserSessionManager {
 
 	async startBrowser(options: StartBrowserOptions = {}): Promise<StartBrowserResult> {
 		this.logger.debug(`[BrowserSessionManager] startBrowser headless=${options.headless ?? true} url=${options.url ?? "none"}`);
-		const { headless = true, url, proxy, geoip = false } = options;
+		const { headless = true, url, proxy, geoip = false, disableCache = false } = options;
 
 		const BROWSER_LAUNCH_TIMEOUT = 30000; // 30s timeout
 		const MAX_RETRIES = 2;
@@ -95,6 +97,8 @@ export class BrowserSessionManager {
 						password: proxy.password,
 					}
 				: undefined,
+			// Disable cache to reduce memory usage (helps prevent OOM in resource-constrained environments)
+			...(disableCache && { enable_cache: false }),
 		};
 
 		// Launch Camoufox with timeout and retry logic
