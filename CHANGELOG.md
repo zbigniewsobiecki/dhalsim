@@ -1,3 +1,9 @@
+## [1.4.0](https://github.com/zbigniewsobiecki/dhalsim/compare/v1.3.5...v1.4.0) (2025-12-23)
+
+### Features
+
+* add configurable timeoutMs for BrowseWeb subagent ([#18](https://github.com/zbigniewsobiecki/dhalsim/issues/18)) ([1f0a8c3](https://github.com/zbigniewsobiecki/dhalsim/commit/1f0a8c3dbcfa00d1172374268d9ed66a52648c0e)), closes [#265](https://github.com/zbigniewsobiecki/dhalsim/issues/265)
+
 ## [1.3.5](https://github.com/zbigniewsobiecki/dhalsim/compare/v1.3.4...v1.3.5) (2025-12-22)
 
 ### Bug Fixes
