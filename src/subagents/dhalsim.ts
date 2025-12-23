@@ -117,6 +117,7 @@ Use this for web research, data extraction, form filling, or any web-based task.
 		headless: z.boolean().optional().describe("Run browser in headless mode (default: true, configurable via CLI)"),
 		timeoutMs: z.number().optional().describe("Overall timeout in ms (default: 300000 = 5 min, 0 = disabled, configurable via CLI)"),
 		disableCache: z.boolean().optional().describe("Disable browser cache for lower memory usage (default: false, configurable via CLI)"),
+		navigationTimeoutMs: z.number().optional().describe("Navigation timeout in ms (default: 60000, configurable via CLI)"),
 	}),
 	timeoutMs: 300000, // 5 minutes - web browsing can take time
 }) {
@@ -165,6 +166,12 @@ Use this for web research, data extraction, form filling, or any web-based task.
 			defaultValue: false,
 		});
 
+		const navigationTimeoutMs = resolveValue(ctx!, "BrowseWeb", {
+			runtime: params.navigationTimeoutMs,
+			subagentKey: "navigationTimeoutMs",
+			defaultValue: 60000,
+		});
+
 		// Track collected screenshots (costs are tracked automatically via ExecutionTree)
 		const collectedMedia: GadgetMediaOutput[] = [];
 
@@ -176,11 +183,12 @@ Use this for web research, data extraction, form filling, or any web-based task.
 			// Start browser with initial page (only if we own the manager)
 			let pageId: string;
 			if (isOwnedManager) {
-				logger?.debug(`[BrowseWeb] Starting browser headless=${headless} disableCache=${disableCache}...`);
+				logger?.debug(`[BrowseWeb] Starting browser headless=${headless} disableCache=${disableCache} navigationTimeoutMs=${navigationTimeoutMs}...`);
 				const result = await manager.startBrowser({
 					headless,
 					url, // Navigate directly to the starting URL
 					disableCache,
+					navigationTimeoutMs,
 				});
 				pageId = result.pageId;
 				logger?.debug(`[BrowseWeb] Browser started pageId=${pageId}`);

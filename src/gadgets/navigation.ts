@@ -41,7 +41,7 @@ export class Navigate extends Gadget({
 				});
 			}
 
-			await page.goto(params.url); // Uses Playwright default 'load'
+			await page.goto(params.url, { timeout: 60000, waitUntil: "domcontentloaded" });
 			return JSON.stringify({
 				url: page.url(),
 				title: await page.title(),
@@ -199,7 +199,7 @@ export class Reload extends Gadget({
 		logger.debug(`[Reload] pageId=${params.pageId}`);
 		try {
 			const page = this.manager.requirePage(params.pageId);
-			await page.reload(); // Uses Playwright default 'load'
+			await page.reload({ timeout: 60000, waitUntil: "domcontentloaded" });
 			return JSON.stringify({
 				success: true,
 				url: page.url(),
