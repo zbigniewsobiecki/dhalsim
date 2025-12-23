@@ -37,6 +37,8 @@ export interface DhalsimOptions {
 	sessionManager?: DhalsimSessionManager;
 	/** Custom system prompt (defaults to DHALSIM_SYSTEM_PROMPT) */
 	systemPrompt?: string;
+	/** Overall timeout in milliseconds (default: 300000 = 5 min, 0 = disabled) */
+	timeoutMs?: number;
 }
 
 /**
@@ -113,6 +115,7 @@ Use this for web research, data extraction, form filling, or any web-based task.
 		maxIterations: z.number().optional().describe("Maximum number of steps before giving up (default: 15, configurable via CLI)"),
 		model: z.string().optional().describe("Model to use for the browser agent (default: inherit from parent agent, configurable via CLI)"),
 		headless: z.boolean().optional().describe("Run browser in headless mode (default: true, configurable via CLI)"),
+		timeoutMs: z.number().optional().describe("Overall timeout in ms (default: 300000 = 5 min, 0 = disabled, configurable via CLI)"),
 	}),
 	timeoutMs: 300000, // 5 minutes - web browsing can take time
 }) {
@@ -123,6 +126,10 @@ Use this for web research, data extraction, form filling, or any web-based task.
 		super();
 		this.customSessionManager = options?.sessionManager;
 		this.customSystemPrompt = options?.systemPrompt;
+		// Set factory-configured timeout (overrides default 300000)
+		if (options?.timeoutMs !== undefined) {
+			this.timeoutMs = options.timeoutMs === 0 ? undefined : options.timeoutMs;
+		}
 	}
 
 	async execute(
