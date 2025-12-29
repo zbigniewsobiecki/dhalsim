@@ -19,5 +19,19 @@ export {
 } from "./factory";
 
 // Subagents (high-level gadgets with internal agent loops)
-export { Dhalsim, DHALSIM_SYSTEM_PROMPT, DHALSIM_MINIMAL_PROMPT } from "./subagents";
-export type { DhalsimOptions, DhalsimSessionManager } from "./subagents";
+export {
+	Dhalsim,
+	DHALSIM_SYSTEM_PROMPT,
+	DHALSIM_MINIMAL_PROMPT,
+	createDhalsimSystemPrompt,
+} from "./subagents";
+export type {
+	DhalsimOptions,
+	DhalsimSessionManager,
+	UserAssistanceParams,
+	UserAssistanceCallback,
+} from "./subagents";
+
+// Export reason type for custom callback typing
+export type { UserAssistanceReason } from "./gadgets/user-input";
+export { USER_ASSISTANCE_REASONS } from "./gadgets/user-input";
