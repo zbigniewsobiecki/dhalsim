@@ -17,8 +17,9 @@ import {
 	WaitForElement,
 	Wait,
 	RequestUserAssistance,
+	type UserAssistanceReason,
 } from "../gadgets";
-import { DHALSIM_SYSTEM_PROMPT } from "./prompts";
+import { createDhalsimSystemPrompt } from "./prompts";
 
 /**
  * Session manager type with the required methods for browser automation.
@@ -30,6 +31,24 @@ export type DhalsimSessionManager = IBrowserSessionManager & {
 };
 
 /**
+ * Parameters passed to the custom user assistance callback.
+ */
+export interface UserAssistanceParams {
+	/** Type of assistance needed */
+	reason: UserAssistanceReason;
+	/** Message describing what's needed */
+	message: string;
+}
+
+/**
+ * Custom callback for handling user assistance requests.
+ * Return the user's response (e.g., 2FA code, "done" for captchas).
+ */
+export type UserAssistanceCallback = (
+	params: UserAssistanceParams,
+) => Promise<string>;
+
+/**
  * Options for configuring the Dhalsim subagent.
  */
 export interface DhalsimOptions {
@@ -39,6 +58,21 @@ export interface DhalsimOptions {
 	systemPrompt?: string;
 	/** Overall timeout in milliseconds (default: 300000 = 5 min, 0 = disabled) */
 	timeoutMs?: number;
+	/**
+	 * Enable or disable RequestUserAssistance gadget.
+	 * - true: Always include the gadget
+	 * - false: Never include the gadget (agent won't know it exists)
+	 * - undefined (default): Auto-detect based on callback availability
+	 */
+	userAssistance?: boolean;
+	/**
+	 * Custom callback for handling user assistance requests.
+	 * When provided, this receives structured params instead of the raw message.
+	 * The callback's return value is passed back to the agent.
+	 *
+	 * If not provided but userAssistance is enabled, falls back to ctx.requestHumanInput.
+	 */
+	onUserAssistance?: UserAssistanceCallback;
 }
 
 /**
@@ -123,11 +157,15 @@ Use this for web research, data extraction, form filling, or any web-based task.
 }) {
 	private customSessionManager?: DhalsimSessionManager;
 	private customSystemPrompt?: string;
+	private userAssistanceEnabled?: boolean;
+	private customUserAssistanceCallback?: UserAssistanceCallback;
 
 	constructor(options?: DhalsimOptions) {
 		super();
 		this.customSessionManager = options?.sessionManager;
 		this.customSystemPrompt = options?.systemPrompt;
+		this.userAssistanceEnabled = options?.userAssistance;
+		this.customUserAssistanceCallback = options?.onUserAssistance;
 		// Set factory-configured timeout (overrides default 300000)
 		if (options?.timeoutMs !== undefined) {
 			this.timeoutMs = options.timeoutMs === 0 ? undefined : options.timeoutMs;
@@ -171,6 +209,15 @@ Use this for web research, data extraction, form filling, or any web-based task.
 			subagentKey: "navigationTimeoutMs",
 			defaultValue: 60000,
 		});
+
+		// Determine if user assistance should be enabled
+		// Priority: explicit option > custom callback > ctx.requestHumanInput availability
+		const userAssistanceEnabled =
+			this.userAssistanceEnabled ??
+			(this.customUserAssistanceCallback !== undefined ||
+				ctx?.requestHumanInput !== undefined);
+
+		logger?.debug(`[BrowseWeb] User assistance enabled=${userAssistanceEnabled}`);
 
 		// Track collected screenshots (costs are tracked automatically via ExecutionTree)
 		const collectedMedia: GadgetMediaOutput[] = [];
@@ -245,7 +292,8 @@ Use this for web research, data extraction, form filling, or any web-based task.
 				new Scroll(manager),
 				new WaitForElement(manager),
 				new Wait(manager),
-				new RequestUserAssistance(manager), // For 2FA, CAPTCHAs, etc.
+				// Conditionally include RequestUserAssistance
+				...(userAssistanceEnabled ? [new RequestUserAssistance(manager)] : []),
 			];
 
 			// Get host's llmist exports to ensure proper tree sharing
@@ -257,10 +305,16 @@ Use this for web research, data extraction, form filling, or any web-based task.
 			// Costs are tracked automatically via the shared ExecutionTree
 			const client = new LLMist();
 
+			// Determine the system prompt
+			// If custom prompt provided, use it; otherwise generate based on userAssistanceEnabled
+			const systemPrompt =
+				this.customSystemPrompt ??
+				createDhalsimSystemPrompt({ includeUserAssistance: userAssistanceEnabled });
+
 			// Build the subagent with abort signal support and automatic nested event forwarding
 			const builder = new AgentBuilder(client)
 				.withModel(model)
-				.withSystem(this.customSystemPrompt ?? DHALSIM_SYSTEM_PROMPT)
+				.withSystem(systemPrompt)
 				.withMaxIterations(maxIterations)
 				.withGadgets(...gadgets)
 				.withTrailingMessage((trailingCtx) => [
@@ -284,10 +338,29 @@ Use this for web research, data extraction, form filling, or any web-based task.
 			if (ctx) {
 				builder.withParentContext(ctx);
 
-				// Inherit human input capability from parent context
-				// This allows RequestUserAssistance to bubble up 2FA/CAPTCHA prompts to the CLI
-				if (ctx.requestHumanInput) {
-					builder.onHumanInput(ctx.requestHumanInput);
+				// Set up human input handling based on configuration
+				if (userAssistanceEnabled) {
+					if (this.customUserAssistanceCallback) {
+						// Custom callback: wrap to parse the structured format
+						builder.onHumanInput(async (prompt: string) => {
+							// Parse the prompt format: "[REASON] message"
+							const match = prompt.match(/^\[([A-Z0-9_]+)\]\s*(.*)$/s);
+							if (match) {
+								const reason = match[1].toLowerCase() as UserAssistanceReason;
+								const message = match[2];
+								return this.customUserAssistanceCallback!({ reason, message });
+							}
+							// Fallback: treat entire prompt as message with 'other' reason
+							return this.customUserAssistanceCallback!({
+								reason: "other",
+								message: prompt,
+							});
+						});
+					} else if (ctx.requestHumanInput) {
+						// Inherit human input capability from parent context
+						// This allows RequestUserAssistance to bubble up 2FA/CAPTCHA prompts to the CLI
+						builder.onHumanInput(ctx.requestHumanInput);
+					}
 				}
 			}
 

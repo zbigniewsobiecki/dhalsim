@@ -1,12 +1,22 @@
 import { Gadget, z, HumanInputRequiredException } from "llmist";
 import type { IBrowserSessionManager } from "../session";
 
+export const USER_ASSISTANCE_REASONS = [
+	"captcha",
+	"2fa_code",
+	"sms_code",
+	"manual_action",
+	"confirmation",
+	"other",
+] as const;
+export type UserAssistanceReason = (typeof USER_ASSISTANCE_REASONS)[number];
+
 export class RequestUserAssistance extends Gadget({
 	description:
 		"Requests input or confirmation from the user. Use when encountering captchas, 2FA codes, or other challenges requiring human intervention. The browser should be in headed mode (headless=false) if user needs to interact with it.",
 	schema: z.object({
 		reason: z
-			.enum(["captcha", "2fa_code", "sms_code", "manual_action", "confirmation", "other"])
+			.enum(USER_ASSISTANCE_REASONS)
 			.describe("Type of assistance needed"),
 		message: z.string().describe("Message to display to the user explaining what's needed"),
 	}),

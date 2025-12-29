@@ -30,4 +30,5 @@ export { ExecuteScript } from "./script";
 export { Wait, WaitForElement } from "./wait";
 
 // User input
-export { RequestUserAssistance } from "./user-input";
+export { RequestUserAssistance, USER_ASSISTANCE_REASONS } from "./user-input";
+export type { UserAssistanceReason } from "./user-input";
