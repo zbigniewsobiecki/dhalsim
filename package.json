@@ -1,6 +1,6 @@
 {
 	"name": "dhalsim",
-	"version": "1.6.1",
+	"version": "1.7.0",
 	"description": "Browser automation for llmist agents using Camoufox anti-detect browser",
 	"type": "module",
 	"main": "dist/index.js",
