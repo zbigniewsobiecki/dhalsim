@@ -1,3 +1,9 @@
+## [1.6.1](https://github.com/zbigniewsobiecki/dhalsim/compare/v1.6.0...v1.6.1) (2025-12-29)
+
+### Bug Fixes
+
+* **deps:** bump llmist to ^11.1.0 ([fcd1fe4](https://github.com/zbigniewsobiecki/dhalsim/commit/fcd1fe4b745bae34e8929675723c2cca5a1986ce))
+
 ## [1.6.0](https://github.com/zbigniewsobiecki/dhalsim/compare/v1.5.0...v1.6.0) (2025-12-23)
 
 ### Features
