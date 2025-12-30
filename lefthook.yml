@@ -3,9 +3,9 @@ pre-commit:
   commands:
     lint:
       glob: "*.{ts,tsx,js,jsx,json}"
-      run: bun run lint
+      run: npm run lint
     typecheck:
       glob: "*.{ts,tsx}"
-      run: bun run typecheck
+      run: npm run typecheck
     # Tests removed from pre-commit - browser tests are slow and flaky
     # Run tests manually or in CI instead

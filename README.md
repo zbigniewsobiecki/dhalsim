@@ -16,16 +16,16 @@ Use dhalsim gadgets directly from the command line for quick tasks and testing.
 
 ```bash
 # Use the BrowseWeb subagent
-bunx @llmist/cli agent "go to apple.com and find iPhone 16 Pro price" -g dhalsim:subagent
+npx @llmist/cli agent "go to apple.com and find iPhone 16 Pro price" -g dhalsim:subagent
 
 # Use all gadgets (for custom agent workflows)
-bunx @llmist/cli agent "navigate to example.com" -g dhalsim
+npx @llmist/cli agent "navigate to example.com" -g dhalsim
 
 # Use readonly preset
-bunx @llmist/cli agent "take a screenshot of google.com" -g dhalsim:readonly
+npx @llmist/cli agent "take a screenshot of google.com" -g dhalsim:readonly
 
 # Use latest dev from GitHub (with BrowseWeb subagent)
-bunx @llmist/cli agent "search google for llmist" -g git+https://github.com/zbigniewsobiecki/dhalsim.git#dev:subagent
+npx @llmist/cli agent "search google for llmist" -g git+https://github.com/zbigniewsobiecki/dhalsim.git#dev:subagent
 ```
 
 ### Configuration
@@ -96,8 +96,6 @@ Install dhalsim as a dependency and use gadgets programmatically.
 
 ```bash
 npm install dhalsim
-# or
-bun add dhalsim
 ```
 
 ### Using Dhalsim Subagent

@@ -11,19 +11,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
 
       - name: Install dependencies
-        run: bun install
+        run: npm ci
 
       - name: Install Playwright browsers
-        run: bunx playwright install chromium
+        run: npx playwright install chromium
 
       - name: Lint
-        run: bun run lint
+        run: npm run lint
 
       - name: Typecheck
-        run: bun run typecheck
+        run: npm run typecheck
 
       - name: Test
-        run: bun run test
+        run: npm test
