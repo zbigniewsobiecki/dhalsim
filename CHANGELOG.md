@@ -1,3 +1,28 @@
+## [2.0.0](https://github.com/zbigniewsobiecki/dhalsim/compare/v1.7.0...v2.0.0) (2025-12-30)
+
+### ⚠ BREAKING CHANGES
+
+* Now requires Node.js and npm instead of Bun.
+
+- Replace bun build with tsup for dual ESM + CJS output
+- Update CI/release workflows to use Node.js 22 and npm
+- Update package.json exports for dual format support
+- Update llmist dependencies to ^12.0.0
+- Update README examples from bunx to npx
+- Remove bun-types and bunfig.toml
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+
+### Features
+
+* migrate from bun-first to node-first ([898f5b0](https://github.com/zbigniewsobiecki/dhalsim/commit/898f5b0c2ef1d1443fec29372e8584ed790ef488))
+
+### Bug Fixes
+
+* **ci:** add --legacy-peer-deps for npm install ([6a13be1](https://github.com/zbigniewsobiecki/dhalsim/commit/6a13be17fa32876e96b699f5c507c8a4a91610eb))
+
 ## [1.7.0](https://github.com/zbigniewsobiecki/dhalsim/compare/v1.6.1...v1.7.0) (2025-12-29)
 
 ### Features
