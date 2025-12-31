@@ -68,7 +68,7 @@
 		"test": "vitest run --no-file-parallelism",
 		"precheck": "npm run lint && npm run typecheck && npm run test",
 		"prepare": "test -n \"$CI\" || lefthook install",
-		"postinstall": "test -n \"$PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD\" || npx camoufox-js fetch"
+		"postinstall": "test -n \"$CI\" || lefthook install"
 	},
 	"keywords": [
 		"browser",
