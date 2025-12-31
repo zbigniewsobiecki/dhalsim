@@ -1,3 +1,9 @@
+## [2.1.0](https://github.com/zbigniewsobiecki/dhalsim/compare/v2.0.0...v2.1.0) (2025-12-31)
+
+### Features
+
+* lazy install camoufox browser on first use ([75cae30](https://github.com/zbigniewsobiecki/dhalsim/commit/75cae30e0b8d2e229cb8c83b55f11e5213e56e52))
+
 ## [2.0.0](https://github.com/zbigniewsobiecki/dhalsim/compare/v1.7.0...v2.0.0) (2025-12-30)
 
 ### ⚠ BREAKING CHANGES
