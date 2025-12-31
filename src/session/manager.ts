@@ -1,5 +1,8 @@
 import type { LaunchOptions as CamoufoxOptions } from "camoufox-js";
 import type { Browser, Page } from "playwright-core";
+import * as fs from "node:fs";
+import * as path from "node:path";
+import * as os from "node:os";
 
 // Lazy-loaded to avoid loading browser automation code until needed
 let CamoufoxModule: typeof import("camoufox-js") | null = null;
@@ -10,13 +13,95 @@ async function loadCamoufox(): Promise<typeof import("camoufox-js").Camoufox> {
 	}
 	return CamoufoxModule.Camoufox;
 }
+
 import { defaultLogger } from "llmist";
 import type { BrowserEntry, BrowserInfo, PageEntry, PageInfo } from "./types";
 
 // Logger type - compatible with both llmist's defaultLogger and console
 type Logger = {
 	debug: (...args: unknown[]) => void;
+	warn?: (...args: unknown[]) => void;
+	info?: (...args: unknown[]) => void;
 };
+
+/**
+ * Get the platform-specific cache directory for Camoufox
+ * Matches the logic in camoufox-js/dist/pkgman.js
+ */
+function getCamoufoxCacheDir(): string {
+	const platform = os.platform();
+	if (platform === "win32") {
+		return path.join(os.homedir(), "AppData", "Local", "camoufox", "camoufox", "Cache");
+	} else if (platform === "darwin") {
+		return path.join(os.homedir(), "Library", "Caches", "camoufox");
+	} else {
+		return path.join(os.homedir(), ".cache", "camoufox");
+	}
+}
+
+/**
+ * Check if camoufox browser binary is installed
+ */
+function isCamoufoxInstalled(): boolean {
+	const cacheDir = getCamoufoxCacheDir();
+	const versionFile = path.join(cacheDir, "version.json");
+	return fs.existsSync(versionFile);
+}
+
+// Singleton promise to prevent concurrent installations
+let browserInstallPromise: Promise<void> | null = null;
+
+/**
+ * Ensure camoufox browser is installed, downloading if necessary
+ * Uses singleton pattern to prevent concurrent downloads
+ */
+async function ensureCamoufoxInstalled(logger: Logger): Promise<void> {
+	// Return existing promise if installation is in progress
+	if (browserInstallPromise) {
+		return browserInstallPromise;
+	}
+
+	// Quick check - already installed
+	if (isCamoufoxInstalled()) {
+		logger.debug?.("[dhalsim] Camoufox browser already installed");
+		return;
+	}
+
+	// Start installation
+	browserInstallPromise = performCamoufoxInstall(logger);
+
+	try {
+		await browserInstallPromise;
+	} finally {
+		// Clear promise after completion (success or failure)
+		browserInstallPromise = null;
+	}
+}
+
+async function performCamoufoxInstall(logger: Logger): Promise<void> {
+	const warn = logger.warn ?? logger.info ?? console.warn;
+
+	warn.call(logger, "[dhalsim] ============================================");
+	warn.call(logger, "[dhalsim] Camoufox browser not found. Starting download...");
+	warn.call(logger, "[dhalsim] This is a one-time download (~1.3GB)");
+	warn.call(logger, "[dhalsim] Future browser sessions will start immediately.");
+	warn.call(logger, "[dhalsim] ============================================");
+
+	try {
+		// Dynamic import to avoid loading heavy modules until needed
+		const { CamoufoxFetcher } = await import("camoufox-js/dist/pkgman.js");
+		const fetcher = new CamoufoxFetcher();
+		await fetcher.install();
+
+		logger.debug?.("[dhalsim] Camoufox browser installed successfully");
+	} catch (error) {
+		const errorMessage = error instanceof Error ? error.message : String(error);
+		throw new Error(
+			`Failed to download Camoufox browser: ${errorMessage}\n` +
+			"You can manually install by running: npx camoufox fetch"
+		);
+	}
+}
 
 export interface ProxyOptions {
 	server: string;
@@ -82,6 +167,9 @@ export class BrowserSessionManager {
 	async startBrowser(options: StartBrowserOptions = {}): Promise<StartBrowserResult> {
 		this.logger.debug(`[BrowserSessionManager] startBrowser headless=${options.headless ?? true} url=${options.url ?? "none"}`);
 		const { headless = true, url, proxy, geoip = false, disableCache = false, navigationTimeoutMs = 60000 } = options;
+
+		// Ensure camoufox browser is installed (lazy download if needed)
+		await ensureCamoufoxInstalled(this.logger);
 
 		const BROWSER_LAUNCH_TIMEOUT = 30000; // 30s timeout
 		const MAX_RETRIES = 2;
