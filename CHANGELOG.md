@@ -1,3 +1,9 @@
+## [2.1.10](https://github.com/zbigniewsobiecki/dhalsim/compare/v2.1.9...v2.1.10) (2026-01-01)
+
+### Bug Fixes
+
+* **ci:** override GITHUB_REF env var for semantic-release ([12dac79](https://github.com/zbigniewsobiecki/dhalsim/commit/12dac79ef40abb365b635ccb8a5e97a750d521ed))
+
 ## [2.1.9](https://github.com/zbigniewsobiecki/dhalsim/compare/v2.1.8...v2.1.9) (2026-01-01)
 
 ### Bug Fixes
