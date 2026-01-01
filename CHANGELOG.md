@@ -1,3 +1,9 @@
+## [2.1.7](https://github.com/zbigniewsobiecki/dhalsim/compare/v2.1.6...v2.1.7) (2026-01-01)
+
+### Bug Fixes
+
+* **ci:** explicitly checkout main branch in release workflow ([22d4bd7](https://github.com/zbigniewsobiecki/dhalsim/commit/22d4bd7ba191e853808ed7de7d8d3e6768e1f20f))
+
 ## [2.1.6](https://github.com/zbigniewsobiecki/dhalsim/compare/v2.1.5...v2.1.6) (2026-01-01)
 
 ## [2.1.5](https://github.com/zbigniewsobiecki/dhalsim/compare/v2.1.4...v2.1.5) (2026-01-01)
