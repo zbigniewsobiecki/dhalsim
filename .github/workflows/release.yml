@@ -59,7 +59,8 @@ jobs:
         run: |
           BEFORE_SHA=$(git rev-parse HEAD)
 
-          npx semantic-release || RELEASE_EXIT_CODE=$?
+          # --branch main: Override branch detection (workflow_run events can report wrong branch)
+          npx semantic-release --branch main || RELEASE_EXIT_CODE=$?
 
           AFTER_SHA=$(git rev-parse HEAD)
           if [ "$BEFORE_SHA" != "$AFTER_SHA" ]; then
