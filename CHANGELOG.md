@@ -1,3 +1,9 @@
+## [2.1.3](https://github.com/zbigniewsobiecki/dhalsim/compare/v2.1.2...v2.1.3) (2026-01-01)
+
+### Bug Fixes
+
+* **deps:** update camoufox-js to use better-sqlite3 ^12.0.0 ([a03ac45](https://github.com/zbigniewsobiecki/dhalsim/commit/a03ac45be83871bb7c0cd4792222730abb2c9d3c))
+
 ## [2.1.2](https://github.com/zbigniewsobiecki/dhalsim/compare/v2.1.1...v2.1.2) (2026-01-01)
 
 ### Bug Fixes
