@@ -1,3 +1,9 @@
+## [2.1.2](https://github.com/zbigniewsobiecki/dhalsim/compare/v2.1.1...v2.1.2) (2026-01-01)
+
+### Bug Fixes
+
+* **deps:** pin camoufox-js to specific commit instead of master ([64c91dd](https://github.com/zbigniewsobiecki/dhalsim/commit/64c91dddf603a044ef9a1e27fc497a527674e2b2))
+
 ## [2.1.1](https://github.com/zbigniewsobiecki/dhalsim/compare/v2.1.0...v2.1.1) (2026-01-01)
 
 ### Bug Fixes
