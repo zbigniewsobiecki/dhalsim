@@ -1,3 +1,9 @@
+## [2.1.8](https://github.com/zbigniewsobiecki/dhalsim/compare/v2.1.7...v2.1.8) (2026-01-01)
+
+### Bug Fixes
+
+* **ci:** add explicit branch check to release workflow ([add8362](https://github.com/zbigniewsobiecki/dhalsim/commit/add83629b34ec6287bc4e5c1874af92195f60821))
+
 ## [2.1.7](https://github.com/zbigniewsobiecki/dhalsim/compare/v2.1.6...v2.1.7) (2026-01-01)
 
 ### Bug Fixes
