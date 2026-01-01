@@ -1,31 +1,26 @@
 name: Release
 
 on:
-  workflow_dispatch:
-    inputs:
-      dry_run:
-        description: 'Run in dry-run mode (no publish)'
-        required: false
-        default: false
-        type: boolean
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - '**.md'
-      - '.github/**'
+  # Trigger after CI passes on main branch (only way to release)
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
 
 jobs:
   release:
     name: Semantic Release
     runs-on: ubuntu-latest
-    # Skip if commit message contains [skip release] or [release skip]
-    if: ${{ !contains(github.event.head_commit.message, '[skip release]') && !contains(github.event.head_commit.message, '[release skip]') }}
+    environment: CI
+    # Only run if CI succeeded
+    if: github.event.workflow_run.conclusion == 'success'
     permissions:
       contents: write
       issues: write
       pull-requests: write
-    environment: CI
+    outputs:
+      released: ${{ steps.semantic.outputs.released == 'true' }}
+      version: ${{ steps.semantic.outputs.version }}
 
     steps:
       - name: Checkout repository
@@ -33,6 +28,7 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.GH_PAT }}
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -54,34 +50,56 @@ jobs:
           git config core.hooksPath /dev/null
 
       - name: Run semantic-release
+        id: semantic
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           LEFTHOOK: '0'
         run: |
-          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
-            echo "Running in dry-run mode"
-            npx semantic-release --dry-run
+          BEFORE_SHA=$(git rev-parse HEAD)
+
+          npx semantic-release || RELEASE_EXIT_CODE=$?
+
+          AFTER_SHA=$(git rev-parse HEAD)
+          if [ "$BEFORE_SHA" != "$AFTER_SHA" ]; then
+            echo "released=true" >> $GITHUB_OUTPUT
+            VERSION=$(node -p "require('./package.json').version")
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "✅ Release $VERSION created"
           else
-            npx semantic-release
+            echo "released=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No release commit - skipping publish"
+          fi
+          exit ${RELEASE_EXIT_CODE:-0}
+
+  # Sync dev branch after any successful CI on main
+  sync-dev:
+    name: Sync dev branch
+    runs-on: ubuntu-latest
+    needs: release
+    if: always() && needs.release.result == 'success'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Sync dev with main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git fetch origin
+          git checkout dev
+
+          # Fast-forward if possible, otherwise merge
+          if git merge origin/main --ff-only; then
+            echo "✅ Fast-forwarded dev to main"
+          else
+            echo "⚠️ Cannot fast-forward, creating merge commit..."
+            git merge origin/main --no-edit -m "chore: sync dev with main [skip ci]"
           fi
 
-      - name: Sync dev branch
-        if: ${{ github.event.inputs.dry_run != 'true' }}
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
-        run: |
-          git fetch origin
-          # Check if dev is behind main
-          if git merge-base --is-ancestor origin/main origin/dev; then
-            echo "dev is already up to date with main"
-            exit 0
-          fi
-          # Create sync branch and PR
-          SYNC_BRANCH="sync/main-to-dev-${{ github.run_id }}"
-          git checkout -b "$SYNC_BRANCH" origin/main
-          git push origin "$SYNC_BRANCH"
-          gh pr create --base dev --head "$SYNC_BRANCH" \
-            --title "chore: sync dev with main after release [skip ci]" \
-            --body "Automated sync of release changes from main to dev branch." \
-          && gh pr merge --auto --squash
+          git push origin dev
+          echo "✅ Sync complete"
