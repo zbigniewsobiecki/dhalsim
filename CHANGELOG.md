@@ -1,3 +1,9 @@
+## [2.1.9](https://github.com/zbigniewsobiecki/dhalsim/compare/v2.1.8...v2.1.9) (2026-01-01)
+
+### Bug Fixes
+
+* **ci:** use --branch main to override semantic-release branch detection ([44daa32](https://github.com/zbigniewsobiecki/dhalsim/commit/44daa3264cc890da28d3205b010b6c3f616a561d))
+
 ## [2.1.8](https://github.com/zbigniewsobiecki/dhalsim/compare/v2.1.7...v2.1.8) (2026-01-01)
 
 ### Bug Fixes
