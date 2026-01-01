@@ -1,3 +1,9 @@
+## [2.1.11](https://github.com/zbigniewsobiecki/dhalsim/compare/v2.1.10...v2.1.11) (2026-01-01)
+
+### Bug Fixes
+
+* skip lefthook install when installed as dependency ([#36](https://github.com/zbigniewsobiecki/dhalsim/issues/36)) ([aaa5fed](https://github.com/zbigniewsobiecki/dhalsim/commit/aaa5feda6463b9f41f8dd80abf27dc5178092cd9))
+
 ## [2.1.10](https://github.com/zbigniewsobiecki/dhalsim/compare/v2.1.9...v2.1.10) (2026-01-01)
 
 ### Bug Fixes
