@@ -1,3 +1,5 @@
+## [2.1.4](https://github.com/zbigniewsobiecki/dhalsim/compare/v2.1.3...v2.1.4) (2026-01-01)
+
 ## [2.1.3](https://github.com/zbigniewsobiecki/dhalsim/compare/v2.1.2...v2.1.3) (2026-01-01)
 
 ### Bug Fixes
