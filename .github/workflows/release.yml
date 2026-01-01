@@ -56,11 +56,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           LEFTHOOK: '0'
+          # Override GITHUB_REF to match checked-out branch (workflow_run sets wrong ref from triggering workflow)
+          GITHUB_REF: refs/heads/main
         run: |
           BEFORE_SHA=$(git rev-parse HEAD)
 
-          # --branch main: Override branch detection (workflow_run events can report wrong branch)
-          npx semantic-release --branch main || RELEASE_EXIT_CODE=$?
+          npx semantic-release || RELEASE_EXIT_CODE=$?
 
           AFTER_SHA=$(git rev-parse HEAD)
           if [ "$BEFORE_SHA" != "$AFTER_SHA" ]; then
