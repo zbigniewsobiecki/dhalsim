@@ -78,11 +78,11 @@ export class Navigate extends Gadget({
 ## Commands
 
 ```bash
-bun run typecheck       # TypeScript check
-bun run lint            # Biome lint
-bun run test            # Run tests
-bun run precheck        # lint + typecheck + test (pre-commit)
-bun run build           # Build for distribution
+npm run typecheck       # TypeScript check
+npm run lint            # Biome lint
+npm test                # Run tests
+npm run precheck        # lint + typecheck + test (pre-commit)
+npm run build           # Build for distribution
 ```
 
 ## Available Gadgets
@@ -99,7 +99,7 @@ bun run build           # Build for distribution
 
 ## Testing
 
-Tests use `bun:test` with the `testGadget` helper from llmist:
+Tests use `vitest` with the `testGadget` helper from llmist:
 
 ```typescript
 import { testGadget } from "llmist/testing";
