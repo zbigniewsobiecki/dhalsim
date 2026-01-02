@@ -1,3 +1,9 @@
+## [2.2.1](https://github.com/zbigniewsobiecki/dhalsim/compare/v2.2.0...v2.2.1) (2026-01-02)
+
+### Bug Fixes
+
+* **deps:** update camoufox-js to commit with rebuilt dist ([#39](https://github.com/zbigniewsobiecki/dhalsim/issues/39)) ([122ef9b](https://github.com/zbigniewsobiecki/dhalsim/commit/122ef9b9060e077a8c84881da94eeeefbe2146d2))
+
 ## [2.2.0](https://github.com/zbigniewsobiecki/dhalsim/compare/v2.1.11...v2.2.0) (2026-01-01)
 
 ### Features
