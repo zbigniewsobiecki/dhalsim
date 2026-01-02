@@ -1,3 +1,9 @@
+## [2.3.0](https://github.com/zbigniewsobiecki/dhalsim/compare/v2.2.1...v2.3.0) (2026-01-02)
+
+### Features
+
+* **deps:** require llmist >=12.3.0 for parentObservers support ([9fcf76b](https://github.com/zbigniewsobiecki/dhalsim/commit/9fcf76bf9c89a8679d4e4b7bc8beb07cd94edbbb))
+
 ## [2.2.1](https://github.com/zbigniewsobiecki/dhalsim/compare/v2.2.0...v2.2.1) (2026-01-02)
 
 ### Bug Fixes
