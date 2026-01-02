@@ -96,7 +96,7 @@
 		"README.md"
 	],
 	"dependencies": {
-		"camoufox-js": "github:zbigniewsobiecki/camoufox-js#18e09ec",
+		"camoufox-js": "github:zbigniewsobiecki/camoufox-js#86d1dab",
 		"playwright-core": "^1.57.0"
 	},
 	"devDependencies": {
