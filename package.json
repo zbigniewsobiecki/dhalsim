@@ -111,7 +111,7 @@
 		"@types/node": "^20.12.7",
 		"conventional-changelog-conventionalcommits": "^9.1.0",
 		"lefthook": "^1.6.0",
-		"llmist": "^12.3.1",
+		"llmist": "^12.3.2",
 		"semantic-release": "^25.0.2",
 		"tsup": "^8.5.0",
 		"typescript": "^5.4.5",
