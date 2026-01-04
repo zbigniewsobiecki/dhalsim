@@ -1,3 +1,9 @@
+## [2.3.1](https://github.com/zbigniewsobiecki/dhalsim/compare/v2.3.0...v2.3.1) (2026-01-04)
+
+### Bug Fixes
+
+* **dhalsim:** use TaskCompletionSignal for ReportResult gadget ([#43](https://github.com/zbigniewsobiecki/dhalsim/issues/43)) ([abdeaf7](https://github.com/zbigniewsobiecki/dhalsim/commit/abdeaf7da58e7d8401eb7bdf28a5e3d5b67f6cbe))
+
 ## [2.3.0](https://github.com/zbigniewsobiecki/dhalsim/compare/v2.2.1...v2.3.0) (2026-01-02)
 
 ### Features
