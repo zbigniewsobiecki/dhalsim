@@ -1,4 +1,4 @@
-import { Gadget, z, getHostExports, resolveSubagentModel, resolveValue } from "llmist";
+import { Gadget, z, getHostExports, resolveSubagentModel, resolveValue, TaskCompletionSignal } from "llmist";
 import type { ExecutionContext, GadgetMediaOutput } from "llmist";
 import { BrowserSessionManager } from "../session";
 import type { IBrowserSessionManager, StartBrowserOptions, StartBrowserResult } from "../session";
@@ -77,7 +77,8 @@ export interface DhalsimOptions {
 
 /**
  * Internal gadget for the browser agent to report its final result.
- * This gadget captures the result text so it can be returned to the caller.
+ * Uses TaskCompletionSignal to properly terminate the agent loop while
+ * ensuring all events (including llm_call_complete) are emitted.
  */
 class ReportResult extends Gadget({
 	name: "ReportResult",
@@ -91,11 +92,10 @@ class ReportResult extends Gadget({
 			),
 	}),
 }) {
-	result: string | null = null;
-
 	execute(params: this["params"]): string {
-		this.result = params.result;
-		return "Result reported successfully.";
+		// Signal task completion - llmist will set breaksLoop: true
+		// and use params.result as the gadget result
+		throw new TaskCompletionSignal(params.result);
 	}
 }
 
@@ -387,6 +387,7 @@ Use this for web research, data extraction, form filling, or any web-based task.
 			// Run the subagent loop
 			logger?.debug(`[BrowseWeb] Starting agent loop model=${model} maxIterations=${maxIterations}`);
 			let finalResult = "";
+			let reportedResult: string | undefined;
 
 			for await (const event of agent.run()) {
 				// Abort check
@@ -403,9 +404,10 @@ Use this for web research, data extraction, form filling, or any web-based task.
 							collectedMedia.push(media);
 						}
 					}
-					// Break early if ReportResult was called
-					if (reportResult.result !== null) {
-						break;
+					// Capture result when ReportResult completes (it sets breaksLoop: true)
+					// The loop will naturally end when the agent finishes this iteration
+					if (event.result.gadgetName === "ReportResult" && event.result.breaksLoop) {
+						reportedResult = event.result.result;
 					}
 				} else if (event.type === "text") {
 					// Capture the final text response
@@ -418,7 +420,7 @@ Use this for web research, data extraction, form filling, or any web-based task.
 			// Priority: ReportResult gadget > text events > fallback message
 			return {
 				result:
-					reportResult.result ||
+					reportedResult ||
 					finalResult ||
 					"Task completed but no result text was generated.",
 				media: collectedMedia.length > 0 ? collectedMedia : undefined,
