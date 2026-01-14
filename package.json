@@ -103,7 +103,7 @@
 		"@biomejs/biome": "^2.3.2",
 		"@commitlint/cli": "^20.1.0",
 		"@commitlint/config-conventional": "^20.0.0",
-		"@llmist/testing": "^12.3.1",
+		"@llmist/testing": "^15.6.0",
 		"@semantic-release/changelog": "^6.0.3",
 		"@semantic-release/git": "^10.0.1",
 		"@semantic-release/github": "^12.0.2",
@@ -111,14 +111,14 @@
 		"@types/node": "^20.12.7",
 		"conventional-changelog-conventionalcommits": "^9.1.0",
 		"lefthook": "^1.6.0",
-		"llmist": "^12.3.2",
+		"llmist": "^15.6.0",
 		"semantic-release": "^25.0.2",
 		"tsup": "^8.5.0",
 		"typescript": "^5.4.5",
 		"vitest": "^4.0.15"
 	},
 	"peerDependencies": {
-		"llmist": ">=12.3.1"
+		"llmist": ">=15.6.0"
 	},
 	"engines": {
 		"node": ">=22.0.0"
