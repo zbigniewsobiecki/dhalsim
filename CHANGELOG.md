@@ -1,3 +1,9 @@
+## [2.4.0](https://github.com/zbigniewsobiecki/dhalsim/compare/v2.3.1...v2.4.0) (2026-03-07)
+
+### Features
+
+* **dhalsim:** add disableNavigation parameter to BrowseWeb ([#52](https://github.com/zbigniewsobiecki/dhalsim/issues/52)) ([b6a7845](https://github.com/zbigniewsobiecki/dhalsim/commit/b6a78454604692efe24cb6fc533629bccfe517c3))
+
 ## [2.3.1](https://github.com/zbigniewsobiecki/dhalsim/compare/v2.3.0...v2.3.1) (2026-01-04)
 
 ### Bug Fixes
