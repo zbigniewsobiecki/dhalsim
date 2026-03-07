@@ -1,6 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { TestBrowserSessionManager } from "../session/test-manager";
 import { GetFullPageContent, DismissOverlays } from "../gadgets";
+import { createDhalsimSystemPrompt } from "./prompts";
+import { Dhalsim } from "./dhalsim";
 
 /**
  * Tests that verify the auto-fetch behavior in BrowseWeb startup.
@@ -134,5 +136,62 @@ describe("BrowseWeb auto-fetch behavior", () => {
 			expect(initialMessage).toContain("</InitialPageContent>");
 			expect(initialMessage.toLowerCase()).toMatch(/cnn|news/i);
 		}, 60000);
+	});
+});
+
+describe("createDhalsimSystemPrompt", () => {
+	describe("disableNavigation option", () => {
+		it("should include Navigate in gadget list when disableNavigation is false", () => {
+			const prompt = createDhalsimSystemPrompt({
+				includeUserAssistance: false,
+				disableNavigation: false,
+			});
+
+			expect(prompt).toContain("- Navigate: Go to a URL");
+			expect(prompt).toContain("Use Navigate to go to URLs");
+			expect(prompt).toContain("After any Navigate call");
+		});
+
+		it("should include Navigate in gadget list when disableNavigation is undefined", () => {
+			const prompt = createDhalsimSystemPrompt({
+				includeUserAssistance: false,
+			});
+
+			expect(prompt).toContain("- Navigate: Go to a URL");
+			expect(prompt).toContain("Use Navigate to go to URLs");
+		});
+
+		it("should exclude Navigate from gadget list when disableNavigation is true", () => {
+			const prompt = createDhalsimSystemPrompt({
+				includeUserAssistance: false,
+				disableNavigation: true,
+			});
+
+			expect(prompt).not.toContain("- Navigate: Go to a URL");
+			expect(prompt).not.toContain("Use Navigate to go to URLs");
+			expect(prompt).not.toContain("After any Navigate call");
+		});
+
+		it("should mention navigation restriction when disableNavigation is true", () => {
+			const prompt = createDhalsimSystemPrompt({
+				includeUserAssistance: false,
+				disableNavigation: true,
+			});
+
+			expect(prompt).toContain("You cannot navigate to other URLs");
+		});
+	});
+});
+
+describe("Dhalsim class", () => {
+	it("should accept disableNavigation option in constructor", () => {
+		const manager = new TestBrowserSessionManager();
+		const dhalsim = new Dhalsim({
+			sessionManager: manager,
+			disableNavigation: true,
+		});
+
+		// Verify the instance was created successfully
+		expect(dhalsim).toBeInstanceOf(Dhalsim);
 	});
 });
