@@ -66,6 +66,12 @@ export interface DhalsimOptions {
 	 */
 	userAssistance?: boolean;
 	/**
+	 * Disable the Navigate gadget to restrict the agent to the initial URL.
+	 * When true, the agent can only interact with the page at the provided URL.
+	 * Default: false (Navigate is available)
+	 */
+	disableNavigation?: boolean;
+	/**
 	 * Custom callback for handling user assistance requests.
 	 * When provided, this receives structured params instead of the raw message.
 	 * The callback's return value is passed back to the agent.
@@ -152,12 +158,14 @@ Use this for web research, data extraction, form filling, or any web-based task.
 		timeoutMs: z.number().optional().describe("Overall timeout in ms (default: 300000 = 5 min, 0 = disabled, configurable via CLI)"),
 		disableCache: z.boolean().optional().describe("Disable browser cache for lower memory usage (default: false, configurable via CLI)"),
 		navigationTimeoutMs: z.number().optional().describe("Navigation timeout in ms (default: 60000, configurable via CLI)"),
+		disableNavigation: z.boolean().optional().describe("Disable Navigate gadget to restrict agent to the initial URL (default: false, configurable via CLI)"),
 	}),
 	timeoutMs: 300000, // 5 minutes - web browsing can take time
 }) {
 	private customSessionManager?: DhalsimSessionManager;
 	private customSystemPrompt?: string;
 	private userAssistanceEnabled?: boolean;
+	private navigationDisabled?: boolean;
 	private customUserAssistanceCallback?: UserAssistanceCallback;
 
 	constructor(options?: DhalsimOptions) {
@@ -165,6 +173,7 @@ Use this for web research, data extraction, form filling, or any web-based task.
 		this.customSessionManager = options?.sessionManager;
 		this.customSystemPrompt = options?.systemPrompt;
 		this.userAssistanceEnabled = options?.userAssistance;
+		this.navigationDisabled = options?.disableNavigation;
 		this.customUserAssistanceCallback = options?.onUserAssistance;
 		// Set factory-configured timeout (overrides default 300000)
 		if (options?.timeoutMs !== undefined) {
@@ -210,6 +219,12 @@ Use this for web research, data extraction, form filling, or any web-based task.
 			defaultValue: 60000,
 		});
 
+		const disableNavigation = resolveValue(ctx!, "BrowseWeb", {
+			runtime: params.disableNavigation,
+			subagentKey: "disableNavigation",
+			defaultValue: this.navigationDisabled ?? false,
+		});
+
 		// Determine if user assistance should be enabled
 		// Priority: explicit option > custom callback > ctx.requestHumanInput availability
 		const userAssistanceEnabled =
@@ -217,7 +232,7 @@ Use this for web research, data extraction, form filling, or any web-based task.
 			(this.customUserAssistanceCallback !== undefined ||
 				ctx?.requestHumanInput !== undefined);
 
-		logger?.debug(`[BrowseWeb] User assistance enabled=${userAssistanceEnabled}`);
+		logger?.debug(`[BrowseWeb] User assistance enabled=${userAssistanceEnabled}, disableNavigation=${disableNavigation}`);
 
 		// Track collected screenshots (costs are tracked automatically via ExecutionTree)
 		const collectedMedia: GadgetMediaOutput[] = [];
@@ -280,7 +295,8 @@ Use this for web research, data extraction, form filling, or any web-based task.
 			// Create gadgets with this session's manager
 			const gadgets = [
 				reportResult, // First so it's prominent in the list
-				new Navigate(manager),
+				// Conditionally include Navigate (excluded when disableNavigation is true)
+				...(disableNavigation ? [] : [new Navigate(manager)]),
 				new Click(manager),
 				new Fill(manager),
 				new FillForm(manager),
@@ -306,10 +322,10 @@ Use this for web research, data extraction, form filling, or any web-based task.
 			const client = new LLMist();
 
 			// Determine the system prompt
-			// If custom prompt provided, use it; otherwise generate based on userAssistanceEnabled
+			// If custom prompt provided, use it; otherwise generate based on gadget availability
 			const systemPrompt =
 				this.customSystemPrompt ??
-				createDhalsimSystemPrompt({ includeUserAssistance: userAssistanceEnabled });
+				createDhalsimSystemPrompt({ includeUserAssistance: userAssistanceEnabled, disableNavigation });
 
 			// Build the subagent with abort signal support and automatic nested event forwarding
 			const builder = new AgentBuilder(client)

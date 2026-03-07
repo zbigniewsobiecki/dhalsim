@@ -1,23 +1,4 @@
-const GADGET_LIST_WITH_USER_ASSISTANCE = `## Available Gadgets
-- ReportResult: **REQUIRED** - Call this to return your findings when task is complete
-- Navigate: Go to a URL
-- Click: Click an element (auto-waits for element to be actionable)
-- Fill: Fill a form input
-- FillForm: Fill multiple fields and submit
-- Select: Select dropdown option
-- Check: Toggle checkboxes
-- GetFullPageContent: Read page text content
-- Screenshot: Capture the page (use when you need to show visual results)
-- DismissOverlays: Auto-dismiss cookie banners
-- Scroll: Scroll the page
-- WaitForElement: Wait for an element to appear
-- Wait: General wait
-- RequestUserAssistance: Ask user for help with CAPTCHAs, 2FA codes, or other human-only challenges`;
-
-const GADGET_LIST_WITHOUT_USER_ASSISTANCE = `## Available Gadgets
-- ReportResult: **REQUIRED** - Call this to return your findings when task is complete
-- Navigate: Go to a URL
-- Click: Click an element (auto-waits for element to be actionable)
+const GADGETS_CORE = `- Click: Click an element (auto-waits for element to be actionable)
 - Fill: Fill a form input
 - FillForm: Fill multiple fields and submit
 - Select: Select dropdown option
@@ -29,15 +10,57 @@ const GADGET_LIST_WITHOUT_USER_ASSISTANCE = `## Available Gadgets
 - WaitForElement: Wait for an element to appear
 - Wait: General wait`;
 
+function buildGadgetList(options: { includeNavigation: boolean; includeUserAssistance: boolean }): string {
+	const lines = ["## Available Gadgets", "- ReportResult: **REQUIRED** - Call this to return your findings when task is complete"];
+	if (options.includeNavigation) {
+		lines.push("- Navigate: Go to a URL");
+	}
+	lines.push(GADGETS_CORE);
+	if (options.includeUserAssistance) {
+		lines.push("- RequestUserAssistance: Ask user for help with CAPTCHAs, 2FA codes, or other human-only challenges");
+	}
+	return lines.join("\n");
+}
+
 /**
- * Creates a system prompt with optional RequestUserAssistance gadget mention.
+ * Creates a system prompt with configurable gadget availability.
  */
 export function createDhalsimSystemPrompt(options: {
 	includeUserAssistance: boolean;
+	disableNavigation?: boolean;
 }): string {
-	const gadgetList = options.includeUserAssistance
-		? GADGET_LIST_WITH_USER_ASSISTANCE
-		: GADGET_LIST_WITHOUT_USER_ASSISTANCE;
+	const includeNavigation = !options.disableNavigation;
+	const gadgetList = buildGadgetList({
+		includeNavigation,
+		includeUserAssistance: options.includeUserAssistance,
+	});
+
+	const criticalRules = includeNavigation
+		? `## CRITICAL Rules
+1. You have ONE page (p1) already open. Use Navigate to go to URLs.
+2. ONLY use selectors exactly as shown in <CurrentBrowserState>
+3. NEVER guess selectors - use GetFullPageContent if you need more info
+4. Focus on completing the task efficiently - avoid unnecessary actions
+5. If a selector matches multiple elements, you'll get an error with a "suggestions" array containing valid selectors. USE ONE OF THESE SUGGESTIONS DIRECTLY - don't guess or modify them.
+6. For batch extraction: GetFullPageContent returns ALL matches when a selector matches multiple elements (as "texts" array). Use this instead of querying each element separately.`
+		: `## CRITICAL Rules
+1. You have ONE page (p1) open at the target URL. You cannot navigate to other URLs.
+2. ONLY use selectors exactly as shown in <CurrentBrowserState>
+3. NEVER guess selectors - use GetFullPageContent if you need more info
+4. Focus on completing the task efficiently - avoid unnecessary actions
+5. If a selector matches multiple elements, you'll get an error with a "suggestions" array containing valid selectors. USE ONE OF THESE SUGGESTIONS DIRECTLY - don't guess or modify them.
+6. For batch extraction: GetFullPageContent returns ALL matches when a selector matches multiple elements (as "texts" array). Use this instead of querying each element separately.`;
+
+	const efficientPattern = includeNavigation
+		? `## Efficient Pattern
+On first call: Navigate and DismissOverlays are ALREADY done. Take action immediately.
+After any Navigate call: DismissOverlays, then interact with elements.
+
+If an action doesn't produce expected results, use GetFullPageContent to diagnose before retrying.`
+		: `## Efficient Pattern
+On first call: DismissOverlays is ALREADY done. Take action immediately.
+
+If an action doesn't produce expected results, use GetFullPageContent to diagnose before retrying.`;
 
 	return `You are a browser automation agent focused on completing a specific web task.
 
@@ -52,19 +75,9 @@ This is your source of truth for what's on screen. It contains:
 - CHECKBOXES: Checkbox/radio inputs
 - MENUITEMS: Dropdown options (only visible when dropdown is open)
 
-## CRITICAL Rules
-1. You have ONE page (p1) already open. Use Navigate to go to URLs.
-2. ONLY use selectors exactly as shown in <CurrentBrowserState>
-3. NEVER guess selectors - use GetFullPageContent if you need more info
-4. Focus on completing the task efficiently - avoid unnecessary actions
-5. If a selector matches multiple elements, you'll get an error with a "suggestions" array containing valid selectors. USE ONE OF THESE SUGGESTIONS DIRECTLY - don't guess or modify them.
-6. For batch extraction: GetFullPageContent returns ALL matches when a selector matches multiple elements (as "texts" array). Use this instead of querying each element separately.
+${criticalRules}
 
-## Efficient Pattern
-On first call: Navigate and DismissOverlays are ALREADY done. Take action immediately.
-After any Navigate call: DismissOverlays, then interact with elements.
-
-If an action doesn't produce expected results, use GetFullPageContent to diagnose before retrying.
+${efficientPattern}
 
 ## Dropdown/Toggle Behavior
 Dropdowns are TOGGLES - clicking the same trigger twice will close it!
